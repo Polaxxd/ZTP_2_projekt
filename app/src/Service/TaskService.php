@@ -5,6 +5,7 @@
 
 namespace App\Service;
 
+use App\Entity\Task;
 use App\Repository\TaskRepository;
 use Knp\Component\Pager\Pagination\PaginationInterface;
 use Knp\Component\Pager\PaginatorInterface;
@@ -50,4 +51,25 @@ class TaskService implements TaskServiceInterface
             self::PAGINATOR_ITEMS_PER_PAGE
         );
     }
+
+    /**
+     * Save entity.
+     *
+     * @param Task $task Task entity
+     */
+    public function save(Task $task): void
+    {
+        $this->taskRepository->save($task);
+    }
+
+    /**
+     * Delete entity.
+     *
+     * @param Task $task Task entity
+     */
+    public function delete(Task $task): void
+    {
+        $this->taskRepository->delete($task);
+    }
+
 }

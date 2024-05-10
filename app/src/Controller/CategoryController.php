@@ -9,6 +9,7 @@ use App\Entity\Category;
 use App\Form\Type\CategoryType;
 use App\Service\CategoryServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
@@ -150,10 +151,23 @@ class CategoryController extends AbstractController
     #[Route('/{id}/delete', name: 'category_delete', requirements: ['id' => '[1-9]\d*'], methods: 'GET|DELETE')]
     public function delete(Request $request, Category $category): Response
     {
-        $form = $this->createForm(FormType::class, $category, [
-            'method' => 'DELETE',
-            'action' => $this->generateUrl('category_delete', ['id' => $category->getId()]),
-        ]);
+        if(!$this->categoryService->canBeDeleted($category)) {
+            $this->addFlash(
+                'warning',
+                $this->translator->trans('message.category_contains_tasks')
+            );
+
+            return $this->redirectToRoute('category_index');
+        }
+
+        $form = $this->createForm(
+            FormType::class,
+            $category,
+            [
+                'method' => 'DELETE',
+                'action' => $this->generateUrl('category_delete', ['id' => $category->getId()]),
+            ]
+        );
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
