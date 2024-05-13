@@ -7,6 +7,7 @@ namespace App\Service;
 
 use App\Entity\Category;
 use App\Repository\CategoryRepository;
+use App\Repository\NoteRepository;
 use App\Repository\TaskRepository;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\NonUniqueResultException;
@@ -45,11 +46,13 @@ class CategoryService implements CategoryServiceInterface
      *
      * @param CategoryRepository $categoryRepository Category repository
      * @param TaskRepository $taskRepository
+     * @param NoteRepository $noteRepository
      * @param PaginatorInterface $paginator Paginator
      */
     public function __construct(
         private readonly CategoryRepository $categoryRepository,
         private readonly TaskRepository $taskRepository,
+        private readonly NoteRepository $noteRepository,
         private readonly PaginatorInterface $paginator
     ){
     }
@@ -113,8 +116,7 @@ class CategoryService implements CategoryServiceInterface
     {
         try {
             $result = $this->taskRepository->countByCategory($category);
-
-            return !($result > 0);
+                return !($result > 0);
         } catch (NoResultException|NonUniqueResultException) {
             return false;
         }
