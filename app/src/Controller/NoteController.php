@@ -14,6 +14,7 @@ use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -47,17 +48,16 @@ class NoteController extends AbstractController
     /**
      * Index action.
      *
-     * @param Request $request HTTP Request
+     * @param int $page Page number
      *
      * @return Response HTTP response
      */
     #[Route(name: 'note_index', methods: 'GET')]
-    public function index(Request $request): Response
+    public function index(#[MapQueryParameter] int $page = 1): Response
     {
-//        $filters = $this->getFilters($request);
         $pagination = $this->noteService->getPaginatedList(
-            $request->query->getInt('page', 1),
-//            $filters
+            $page,
+            $this->getUser()
         );
 
         return $this->render('note/index.html.twig', ['pagination' => $pagination]);
@@ -71,6 +71,7 @@ class NoteController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}', name: 'note_show', requirements: ['id' => '[1-9]\d*'], methods: 'GET')]
+    #[IsGranted('VIEW', subject: 'note')]
     public function show(Note $note): Response
     {
         return $this->render('note/show.html.twig', ['note' => $note]);
@@ -120,6 +121,7 @@ class NoteController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/edit', name: 'note_edit', requirements: ['id' => '[1-9]\d*'], methods: 'GET|PUT')]
+    #[IsGranted('VIEW', subject: 'note')]
     public function edit(Request $request, Note $note): Response
     {
         $form = $this->createForm(
@@ -161,6 +163,7 @@ class NoteController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/delete', name: 'note_delete', requirements: ['id' => '[1-9]\d*'], methods: 'GET|DELETE')]
+    #[IsGranted('VIEW', subject: 'note')]
     public function delete(Request $request, Note $note): Response
     {
         $form = $this->createForm(
