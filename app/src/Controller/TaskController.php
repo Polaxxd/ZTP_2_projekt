@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -44,7 +45,10 @@ class TaskController extends AbstractController
     #[Route(name: 'task_index', methods: 'GET')]
     public function index(#[MapQueryParameter] int $page = 1): Response
     {
-        $pagination = $this->taskService->getPaginatedList($page);
+        $pagination = $this->taskService->getPaginatedList(
+            $page,
+            $this->getUser()
+        );
 
         return $this->render('task/index.html.twig', ['pagination' => $pagination]);
     }
@@ -62,9 +66,13 @@ class TaskController extends AbstractController
         requirements: ['id' => '[1-9]\d*'],
         methods: 'GET'
     )]
+    #[IsGranted('VIEW', subject: 'task')]
     public function show(Task $task): Response
     {
-        return $this->render('task/show.html.twig', ['task' => $task]);
+        return $this->render(
+            'task/show.html.twig',
+            ['task' => $task]
+        );
     }
 
     /**
@@ -114,6 +122,7 @@ class TaskController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/edit', name: 'task_edit', requirements: ['id' => '[1-9]\d*'], methods: 'GET|PUT')]
+    #[IsGranted('VIEW', subject: 'task')]
     public function edit(Request $request, Task $task): Response
     {
         $form = $this->createForm(
@@ -155,6 +164,7 @@ class TaskController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/delete', name: 'task_delete', requirements: ['id' => '[1-9]\d*'], methods: 'GET|DELETE')]
+    #[IsGranted('VIEW', subject: 'task')]
     public function delete(Request $request, Task $task): Response
     {
         $form = $this->createForm(
