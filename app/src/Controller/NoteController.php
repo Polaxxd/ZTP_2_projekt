@@ -6,6 +6,7 @@
 namespace App\Controller;
 
 use App\Entity\Note;
+use App\Entity\User;
 use App\Form\Type\NoteType;
 use App\Service\NoteServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -85,7 +86,10 @@ class NoteController extends AbstractController
     #[Route('/create', name: 'note_create', methods: 'GET|POST', )]
     public function create(Request $request): Response
     {
+        /** @var User $user */
+        $user = $this->getUser();
         $note = new Note();
+        $note->setAuthor($user);
         $form = $this->createForm(
             NoteType::class,
             $note,

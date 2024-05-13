@@ -6,6 +6,7 @@
 namespace App\Controller;
 
 use App\Entity\Task;
+use App\Entity\User;
 use App\Form\Type\TaskType;
 use App\Service\TaskService;
 use App\Service\TaskServiceInterface;
@@ -73,10 +74,13 @@ class TaskController extends AbstractController
      *
      * @return Response HTTP response
      */
-    #[Route('/create', name: 'task_create', methods: 'GET|POST', )]
+    #[Route('/create', name: 'task_create', methods: 'GET|POST')]
     public function create(Request $request): Response
     {
+        /** @var User $user */
+        $user = $this->getUser();
         $task = new Task();
+        $task->setAuthor($user);
         $form = $this->createForm(
             TaskType::class,
             $task,
@@ -95,7 +99,10 @@ class TaskController extends AbstractController
             return $this->redirectToRoute('task_index');
         }
 
-        return $this->render('task/create.html.twig',  ['form' => $form->createView()]);
+        return $this->render(
+            'task/create.html.twig',
+            ['form' => $form->createView()]
+        );
     }
 
     /**

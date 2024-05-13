@@ -48,6 +48,10 @@ class NoteFixtures extends AbstractBaseFixtures implements DependentFixtureInter
             $category = $this->getRandomReference('categories');
             $note->setCategory($category);
 
+            /** @var User $author */
+            $author = $this->getRandomReference('users');
+            $note->setAuthor($author);
+
             return $note;
         });
 
@@ -60,10 +64,10 @@ class NoteFixtures extends AbstractBaseFixtures implements DependentFixtureInter
      *
      * @return string[] of dependencies
      *
-     * @psalm-return array{0: CategoryFixtures::class}
+     * @psalm-return array{0: CategoryFixtures::class, 1: UserFixtures::class}
      */
     public function getDependencies(): array
     {
-        return [CategoryFixtures::class];
+        return [CategoryFixtures::class, UserFixtures::class];
     }
 }
