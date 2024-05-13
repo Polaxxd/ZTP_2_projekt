@@ -115,10 +115,14 @@ class CategoryService implements CategoryServiceInterface
     public function canBeDeleted(Category $category): bool
     {
         try {
-            $result = $this->taskRepository->countByCategory($category);
-                return !($result > 0);
+            $taskCount = $this->taskRepository->countByCategory($category);
+            $noteCount = $this->noteRepository->countByCategory($category);
+
+            // Check if the category is used in any tasks or notes
+            return $taskCount === 0 && $noteCount === 0;
         } catch (NoResultException|NonUniqueResultException) {
             return false;
         }
     }
+
 }
