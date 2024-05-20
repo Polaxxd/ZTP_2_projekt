@@ -23,6 +23,13 @@
         <li class="nav-item">
             <a class="nav-link" href="{{ url('category_index') }}">{{ 'label.category' |trans }}</a>
         </li>
+        {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+{#            {% if is_granted('LIST') %}#}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url('user_index') }}">{{ 'action.user'|trans }}</a>
+            </li>
+{#            {% endif %}#}
+        {% endif %}
     </ul>
 
 
@@ -31,11 +38,11 @@
             <li class="nav-item">
                 <span class="navbar-brand mb-0">{{ app.user.email }}</span>
             </li>
-{#            <li class="nav-item">#}
-{#                <a class="nav-link" href="{{ url('user_panel', {id: app.user.id }) }}" title="{{ 'title.account_panel'|trans }}">#}
-{#                    {{ 'title.account_panel'|trans }}#}
-{#                </a>#}
-{#            </li>#}
+            {#            <li class="nav-item">#}
+            {#                <a class="nav-link" href="{{ url('user_panel', {id: app.user.id }) }}" title="{{ 'title.account_panel'|trans }}">#}
+            {#                    {{ 'title.account_panel'|trans }}#}
+            {#                </a>#}
+            {#            </li>#}
             <li class="nav-item">
                 <a class="nav-link" href="{{ url('app_logout') }}">{{ 'action.logout'|trans }}</a>
             </li>
