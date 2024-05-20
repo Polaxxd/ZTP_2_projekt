@@ -64,19 +64,7 @@
         </table>
 
 
-        <div class="flexMarginRight">
-            <div class="navigation text-center">
-                {{ knp_pagination_render(pagination) }}
-            </div>
-            <a href="{{ url('note_create') }}" title="{{ 'action.create' | trans }}" >
-                {{ 'action.create' | trans }}
-            </a>
-        </div>
-        <p>
-            <a href="{{ url('note_index') }}" title="{{ 'action.back_to_list'|trans }}">
-                {{ 'action.back_to_list'|trans }}
-            </a>
-        </p>
+
 
 
 
@@ -88,4 +76,13 @@
             } %}
         </p>
     {% endif %}
+
+    <div class="flexMarginRight">
+        <div class="navigation text-center">
+            {{ knp_pagination_render(pagination) }}
+        </div>
+        <a class="btn btn-outline-success" href="{{ url('note_create') }}" title="{{ 'action.create' | trans }}" >
+            {{ 'action.create' | trans }}
+        </a>
+    </div>
 {% endblock %}
