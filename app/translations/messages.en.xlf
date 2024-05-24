@@ -98,6 +98,14 @@
                 <source>label.task</source>
                 <target>Task</target>
             </trans-unit>
+            <trans-unit id="label.user">
+                <source>label.user</source>
+                <target>User</target>
+            </trans-unit>
+            <trans-unit id="label.roles">
+                <source>label.roles</source>
+                <target>Roles</target>
+            </trans-unit>
             <trans-unit id="label.title">
                 <source>label.title</source>
                 <target>Title</target>
@@ -229,6 +237,26 @@
             <trans-unit id="title.task_list">
                 <source>title.task_list</source>
                 <target>Task list</target>
+            </trans-unit>
+            <trans-unit id="title.user_create">
+                <source>title.user_create</source>
+                <target>User create </target>
+            </trans-unit>
+            <trans-unit id="title.user_delete">
+                <source>title.user_delete</source>
+                <target>Delete user #%id%</target>
+            </trans-unit>
+            <trans-unit id="title.user_details">
+                <source>title.user_details</source>
+                <target>User details #%id%</target>
+            </trans-unit>
+            <trans-unit id="title.user_edit">
+                <source>title.user_edit</source>
+                <target>Edit user #%id%</target>
+            </trans-unit>
+            <trans-unit id="title.user_list">
+                <source>title.user_list</source>
+                <target>User list</target>
             </trans-unit>
         </body>
     </file>

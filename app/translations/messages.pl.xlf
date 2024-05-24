@@ -98,6 +98,14 @@
                 <source>label.task</source>
                 <target>Zadanie</target>
             </trans-unit>
+            <trans-unit id="label.user">
+                <source>label.user</source>
+                <target>Użytkownik</target>
+            </trans-unit>
+            <trans-unit id="label.roles">
+                <source>label.roles</source>
+                <target>Role</target>
+            </trans-unit>
             <trans-unit id="label.title">
                 <source>label.title</source>
                 <target>Tytuł</target>
@@ -229,6 +237,26 @@
             <trans-unit id="title.task_list">
                 <source>title.task_list</source>
                 <target>Lista zadań</target>
+            </trans-unit>
+            <trans-unit id="title.user_create">
+                <source>title.user_create</source>
+                <target>Utwórz użytkownika </target>
+            </trans-unit>
+            <trans-unit id="title.user_delete">
+                <source>title.user_delete</source>
+                <target>Usuń użytkownika #%id%</target>
+            </trans-unit>
+            <trans-unit id="title.user_details">
+                <source>title.user_details</source>
+                <target>Szczegóły użytkownika #%id%</target>
+            </trans-unit>
+            <trans-unit id="title.user_edit">
+                <source>title.user_edit</source>
+                <target>Edytuj użytkownika #%id%</target>
+            </trans-unit>
+            <trans-unit id="title.user_list">
+                <source>title.user_list</source>
+                <target>Lista użytkowników</target>
             </trans-unit>
         </body>
     </file>

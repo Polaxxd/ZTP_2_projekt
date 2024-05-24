@@ -27,7 +27,7 @@
             {% for role in app.user.roles %}
             {% if role == "ROLE_ADMIN"   %}
             <li class="nav-item">
-                <a class="nav-link" href="{{ url('user_index') }}">{{ 'action.user'|trans }}</a>
+                <a class="nav-link" href="{{ url('user_index') }}">{{ 'label.user'|trans }}</a>
             </li>
             {% endif %}
             {% endfor %}
