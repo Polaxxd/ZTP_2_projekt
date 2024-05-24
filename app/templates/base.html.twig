@@ -24,11 +24,13 @@
             <a class="nav-link" href="{{ url('category_index') }}">{{ 'label.category' |trans }}</a>
         </li>
         {% if is_granted('IS_AUTHENTICATED_FULLY') %}
-{#            {% if is_granted('LIST') %}#}
+            {% for role in app.user.roles %}
+            {% if role == "ROLE_ADMIN"   %}
             <li class="nav-item">
                 <a class="nav-link" href="{{ url('user_index') }}">{{ 'action.user'|trans }}</a>
             </li>
-{#            {% endif %}#}
+            {% endif %}
+            {% endfor %}
         {% endif %}
     </ul>
 

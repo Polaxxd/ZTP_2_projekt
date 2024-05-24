@@ -14,6 +14,7 @@ use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -30,8 +31,9 @@ class UserController extends AbstractController
      * @param UserServiceInterface $userService User service
      * @param TranslatorInterface  $translator  Translator
      */
-    public function __construct(private readonly UserServiceInterface $userService, private readonly TranslatorInterface $translator)
+    public function __construct(private readonly UserServiceInterface $userService, private readonly TranslatorInterface $translator, UserPasswordHasherInterface $passwordHasher)
     {
+        $this->passwordHasher = $passwordHasher;
     }
 
     /**
@@ -74,6 +76,8 @@ class UserController extends AbstractController
         );
     }
 
+    private UserPasswordHasherInterface $passwordHasher;
+
     /**
      * Create action.
      *
@@ -84,10 +88,7 @@ class UserController extends AbstractController
     #[Route('/create', name: 'user_create', methods: 'GET|POST')]
     public function create(Request $request): Response
     {
-        /** @var User $user */
-        $user = $this->getUser();
         $user = new User();
-        $user->setAuthor($user);
         $form = $this->createForm(
             UserType::class,
             $user,
@@ -96,6 +97,11 @@ class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->passwordHasher->hashPassword(
+                $user,
+                $form->get('password')->getData()
+            );
+
             $this->userService->save($user);
 
             $this->addFlash(
