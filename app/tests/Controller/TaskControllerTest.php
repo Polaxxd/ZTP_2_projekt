@@ -5,85 +5,126 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\Enum\UserRole;
+use App\Entity\User;
+use App\Repository\UserRepository;
 use Generator;
+use http\Cookie;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 /**
  * class TaskControllerTest.
  */
 class TaskControllerTest extends WebTestCase
 {
-    /**
-     * Test '/task' route.
-     */
-    public function testTaskListRoute(): void
-    {
-        // given
-        $client = static::createClient();
-
-        // when
-        $client->request('GET', '/task');
-        $resultHttpStatusCode = $client->getResponse()->getStatusCode();
-
-        // then
-        $this->assertEquals(200, $resultHttpStatusCode);
-    }
-
 //    /**
-//     * Test default greetings.
+//     * Test '/task' route.
 //     */
-//    public function testDefaultGreetings(): void
+//    public function testTaskListRoute(): void
 //    {
 //        // given
 //        $client = static::createClient();
 //
 //        // when
 //        $client->request('GET', '/task');
+//        $resultHttpStatusCode = $client->getResponse()->getStatusCode();
 //
 //        // then
-//        $this->assertSelectorTextContains('html title', 'title.task_list');
-////        $this->assertSelectorTextContains('html p', 'Hello World!');
+//        $this->assertEquals(200, $resultHttpStatusCode);
 //    }
 
-//    /**
-//     * Test pesonalized greetings.
-//     *
-//     * @param string $name              Name
-//     * @param string $expectedGreetings Expected greetings
-//     *
-//     * @dataProvider dataProviderForTestPersonalizedGreetings
-//     */
-//    public function testPersonalizedGreetings(string $name, string $expectedGreetings): void
-//    {
-//        // given
-//        $client = static::createClient();
-//
-//        // when
-//        $client->request('GET', '/hello/'.$name);
-//
-//        // then
-//        $this->assertSelectorTextContains('html title', $expectedGreetings);
-//        $this->assertSelectorTextContains('html p', $expectedGreetings);
-//    }
-//
-//    /**
-//     * Data provider for testPersonalizedGreetings() method.
-//     *
-//     * @return \Generator Test case
-//     */
-//    public function dataProviderForTestPersonalizedGreetings(): Generator
-//    {
-//        yield 'Hello Ann' => [
-//            'name' => 'Ann',
-//            'expectedGreetings' => 'Hello Ann!',
-//        ];
-//        yield 'Hello John' => [
-//            'name' => 'John',
-//            'expectedGreetings' => 'Hello John!',
-//        ];
-//        yield 'Hello Beth' => [
-//            'name' => 'Beth',
-//            'expectedGreetings' => 'Hello Beth!',
-//        ];
-//    }
+    /**
+     * Test route.
+     *
+     * @const string
+     */
+    public const TEST_ROUTE = '/task';
+
+    /**
+     * Set up tests.
+     */
+    public function setUp(): void
+    {
+        $this->httpClient = static::createClient();
+    }
+
+
+    /**
+     * Simulate user log in.
+     *
+     * @param User $user User entity
+     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    protected function logIn(User $user): void
+    {
+        $session = self::getContainer()->get('session');
+
+        $firewallName = 'main';
+        $firewallContext = 'main';
+
+        $token = new UsernamePasswordToken($user, null, $firewallName, $user->getRoles());
+        $session->set('_security_'.$firewallContext, serialize($token));
+        $session->save();
+
+//        $cookie = new Cookie($session->getName(), $session->getId());
+//        $this->httpClient->getCookieJar()->set($cookie);
+    }
+
+    /**
+     * Create user.
+     *
+     * @return void User entity
+     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    protected function createAndLoginUser(string $email): void
+    {
+        try {
+            $passwordHasher = static::getContainer()->get('security.password_hasher');
+        } catch (NotFoundExceptionInterface|ContainerExceptionInterface $e) {
+        }
+        $user = new User();
+        $user->setEmail($email);
+        $user->setRoles([UserRole::ROLE_USER->value, UserRole::ROLE_ADMIN->value]);
+        $user->setPassword(
+            $passwordHasher->hashPassword(
+                $user,
+                'user1234'
+            )
+        );
+        $userRepository = null;
+        try {
+            $userRepository = static::getContainer()->get(UserRepository::class);
+        } catch (NotFoundExceptionInterface|ContainerExceptionInterface $e) {
+        }
+        $userRepository->save($user);
+        $this->logIn($user);
+    }
+
+    /**
+     * Test index route for admin user.
+     */
+    public function testIndexRouteAdminUser(): void
+    {
+        // given
+        $this->createAndLoginUser('user1@example.com');
+        $expectedStatusCode = 200;
+
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE);
+        $resultStatusCode = $this->httpClient->getResponse()->getStatusCode();
+
+        // then
+        $this->assertEquals($expectedStatusCode, $resultStatusCode);
+    }
+
+
+
+
 }
