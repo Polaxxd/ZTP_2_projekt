@@ -22,12 +22,21 @@ interface UserServiceInterface
      */
     public function getPaginatedList(int $page): PaginationInterface;
 
+
     /**
      * Save entity.
      *
      * @param User $user User entity
      */
     public function save(User $user): void;
+
+    /**
+     * Deleting user's notes
+     *
+     * @param User $user User entity
+     */
+
+    public function deleteUsersTaskAndNotes(User $user): void;
 
     /**
      * Delete entity.

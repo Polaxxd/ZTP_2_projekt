@@ -6,7 +6,11 @@
 namespace App\Service;
 
 use App\Entity\User;
+use App\Repository\NoteRepository;
+use App\Repository\TaskRepository;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\Pagination\PaginationInterface;
 use Knp\Component\Pager\PaginatorInterface;
 
@@ -31,9 +35,16 @@ class UserService implements UserServiceInterface
      *
      * @param UserRepository     $userRepository User repository
      * @param PaginatorInterface $paginator      Paginator
+     *  @param TaskRepository $taskRepository
+     *  @param NoteRepository $noteRepository
      */
-    public function __construct(private readonly UserRepository $userRepository, private readonly PaginatorInterface $paginator)
-    {
+    public function __construct(
+        private readonly UserRepository $userRepository,
+        private readonly PaginatorInterface $paginator,
+        private readonly TaskRepository $taskRepository,
+        private readonly NoteRepository $noteRepository,
+        private readonly EntityManagerInterface $entityManager
+    ) {
     }
 
     /**
@@ -63,13 +74,53 @@ class UserService implements UserServiceInterface
     }
 
     /**
+     * Deleting user's notes
+     *
+     * @param User $user User entity
+     */
+
+    public function deleteUsersTaskAndNotes(User $user): void
+    {
+        $tasks = $this->taskRepository->queryByAuthor($user)->getQuery()->getResult();
+
+        foreach ($tasks as $userTask) {
+            $this->entityManager->remove($userTask);
+        }
+        $this->entityManager->flush();
+
+        $notes = $this->noteRepository->queryByAuthor($user)->getQuery()->getResult();
+
+        foreach ($notes as $userNote) {
+            $this->entityManager->remove($userNote);
+        }
+        $this->entityManager->flush();
+//        $result = $this->taskRepository->queryByAuthor($user);
+//        $array = (array) $result;
+//        assert($this->_em instanceof EntityManager);
+//        foreach ($array as $usersTask) {
+//            $this->_em->remove($usersTask);
+//            $this->_em->flush();
+//        }
+//        $result = $this->noteRepository->queryByAuthor($user);
+//        $array = (array) $result;
+//        assert($this->_em instanceof EntityManager);
+//        foreach ($array as $usersTask) {
+//            $this->_em->remove($usersTask);
+//            $this->_em->flush();
+//        }
+
+    }
+
+    /**
      * Delete entity.
      *
      * @param User $user User entity
      */
     public function delete(User $user): void
     {
+        $this->deleteUsersTaskAndNotes($user);
         $this->userRepository->delete($user);
     }
+
 
 }
