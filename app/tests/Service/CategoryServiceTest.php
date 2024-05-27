@@ -6,6 +6,8 @@
 namespace App\Tests\Service;
 
 use App\Entity\Category;
+use App\Entity\Enum\UserRole;
+use App\Entity\User;
 use App\Service\CategoryService;
 use App\Service\CategoryServiceInterface;
 use Doctrine\DBAL\Types\Types;

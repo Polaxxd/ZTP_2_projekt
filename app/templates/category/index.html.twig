@@ -54,20 +54,17 @@
             </tbody>
         </table>
 
-        <div class="flexMarginRight">
-            <div class="navigation text-center">
-                {{ knp_pagination_render(pagination) }}
-            </div>
-{#            <a href="{{ url('category_create') }}" title="{{ 'action.create' | trans }}" >#}
-{#                {{ 'action.create' | trans }}#}
-{#            </a>#}
-        </div>
-
-
-
     {% else %}
         <p>
             {{ 'message.empty_list'|trans }}
         </p>
     {% endif %}
+    <div class="flexMarginRight">
+        <div class="navigation text-center">
+            {{ knp_pagination_render(pagination) }}
+        </div>
+        <a class="btn btn-outline-success" href="{{ url('category_create') }}" title="{{ 'action.create' | trans }}" >
+            {{ 'action.create' | trans }}
+        </a>
+    </div>
 {% endblock %}
