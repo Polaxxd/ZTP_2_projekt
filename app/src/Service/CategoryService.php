@@ -132,4 +132,21 @@ class CategoryService implements CategoryServiceInterface
         }
     }
 
+    /**
+     * Does category with this id exist?
+     *
+     * @param Category $category Category entity
+     *
+     * @return bool Result
+     */
+    public function categoryExists($id): bool
+    {
+        try {
+            $categoryCount = $this-> findOneById($id);
+            return (!is_null($categoryCount));
+        } catch (NoResultException|NonUniqueResultException) {
+            return false;
+        }
+    }
+
 }

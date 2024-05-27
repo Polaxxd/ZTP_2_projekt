@@ -8,6 +8,8 @@ namespace App\Controller;
 use App\Entity\Category;
 use App\Form\Type\CategoryType;
 use App\Service\CategoryServiceInterface;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\Request;
@@ -141,6 +143,14 @@ class CategoryController extends AbstractController
     #[Route('/{id}/edit', name: 'category_edit', requirements: ['id' => '[1-9]\d*'], methods: 'GET|PUT')]
     public function edit(Request $request, $id): Response
     {
+        if (!$this->categoryService->categoryExists($id)) {
+            $this->addFlash(
+                'warning',
+                $this->translator->trans('message.category_not_found')
+            );
+
+            return $this->redirectToRoute('category_index');
+        }
         $category = $this->categoryService -> findOneById($id);
         $form = $this->createForm(
             CategoryType::class,
@@ -181,44 +191,55 @@ class CategoryController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/delete', name: 'category_delete', requirements: ['id' => '[1-9]\d*'], methods: 'GET|DELETE')]
-    public function delete(Request $request, Category $category): Response
+    public function delete(Request $request, $id): Response
     {
-        if(!$this->categoryService->canBeDeleted($category)) {
+        if (!$this->categoryService->categoryExists($id)) {
             $this->addFlash(
                 'warning',
-                $this->translator->trans('message.category_contains_tasks_or_notes')
+                $this->translator->trans('message.category_not_found')
             );
 
             return $this->redirectToRoute('category_index');
         }
+            $category = $this->categoryService->findOneById($id);
+            if (!$this->categoryService->canBeDeleted($category)) {
+                $this->addFlash(
+                    'warning',
+                    $this->translator->trans('message.category_contains_tasks_or_notes')
+                );
 
-        $form = $this->createForm(
-            FormType::class,
-            $category,
-            [
-                'method' => 'DELETE',
-                'action' => $this->generateUrl('category_delete', ['id' => $category->getId()]),
-            ]
-        );
-        $form->handleRequest($request);
+                return $this->redirectToRoute('category_index');
+            }
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->categoryService->delete($category);
+            $form = $this->createForm(
+                FormType::class,
+                $category,
+                [
+                    'method' => 'DELETE',
+                    'action' => $this->generateUrl('category_delete', ['id' => $category->getId()]),
+                ]
+            );
+            $form->handleRequest($request);
 
-            $this->addFlash(
-                'success',
-                $this->translator->trans('message.deleted_successfully')
+            if ($form->isSubmitted() && $form->isValid()) {
+                $this->categoryService->delete($category);
+
+                $this->addFlash(
+                    'success',
+                    $this->translator->trans('message.deleted_successfully')
+                );
+
+                return $this->redirectToRoute('category_index');
+            }
+
+            return $this->render(
+                'category/delete.html.twig',
+                [
+                    'form' => $form->createView(),
+                    'category' => $category,
+                ]
             );
 
-            return $this->redirectToRoute('category_index');
-        }
 
-        return $this->render(
-            'category/delete.html.twig',
-            [
-                'form' => $form->createView(),
-                'category' => $category,
-            ]
-        );
     }
 }
