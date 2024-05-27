@@ -122,7 +122,7 @@ class CategoryControllerTest extends WebTestCase
             )
         );
         $userRepository = static::getContainer()->get(UserRepository::class);
-        $userRepository->save($user);
+        $userRepository->save($user, 'p@55w0rd');
 
         return $user;
     }
@@ -184,11 +184,43 @@ class CategoryControllerTest extends WebTestCase
         $this->httpClient->loginUser($adminUser);
         // when
         $route = self::TEST_ROUTE . '/' . $expectedCategory->getId() . '/edit';
-        echo $route;
+//        echo $route;
         $this->httpClient->request('GET', $route);
 //        echo $this->httpClient->getResponse()->getContent();
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
 
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+        $this->assertSelectorTextContains('html h1', '#'.$expectedCategory->getId());
+        // ... more assertions...
+    }
+
+    /**
+     * Test delete category.
+     */
+    public function testDeleteCategoryWithMock(): void
+    {
+        // given
+        $expectedStatusCode = 200;
+        $testCategoryId = 123;
+        $expectedCategory = new Category();
+        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
+        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
+        $expectedCategory->setTitle('Test category');
+        $expectedCategory->setCreatedAt(new \DateTimeImmutable());
+        $expectedCategory->setUpdatedAt(new \DateTimeImmutable());
+        $expectedCategory->setSlug('test-category');
+        $categoryService = $this->createMock(CategoryServiceInterface::class);
+        $categoryService->expects($this->once())
+            ->method('findOneById')
+            ->with($testCategoryId)
+            ->willReturn($expectedCategory);
+        static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$expectedCategory->getId().'/delete');
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
         // then
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
         $this->assertSelectorTextContains('html h1', '#'.$expectedCategory->getId());
