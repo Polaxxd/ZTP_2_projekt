@@ -43,6 +43,7 @@ class UserController extends AbstractController
      * @return Response HTTP response
      */
     #[Route(name: 'user_index', methods: 'GET')]
+    #[IsGranted('ROLE_ADMIN')]
     public function index(#[MapQueryParameter] int $page = 1): Response
     {
         $pagination = $this->userService->getPaginatedList(
@@ -66,7 +67,7 @@ class UserController extends AbstractController
         requirements: ['id' => '[1-9]\d*'],
         methods: 'GET'
     )]
-    #[IsGranted('VIEW', subject: 'user')]
+    #[IsGranted('ROLE_ADMIN')]
     public function show(User $user): Response
     {
         return $this->render(
@@ -84,6 +85,7 @@ class UserController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/create', name: 'user_create', methods: 'GET|POST')]
+    #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request): Response
     {
         $user = new User();
@@ -122,7 +124,7 @@ class UserController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/edit', name: 'user_edit', requirements: ['id' => '[1-9]\d*'], methods: 'GET|PUT')]
-    #[IsGranted('VIEW', subject: 'user')]
+    #[IsGranted('ROLE_ADMIN')]
     public function edit(Request $request, User $user): Response
     {
         $form = $this->createForm(
@@ -164,7 +166,7 @@ class UserController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/delete', name: 'user_delete', requirements: ['id' => '[1-9]\d*'], methods: 'GET|DELETE')]
-    #[IsGranted('VIEW', subject: 'user')]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(Request $request, User $user): Response
     {
         $form = $this->createForm(
