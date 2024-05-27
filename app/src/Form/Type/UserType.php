@@ -39,33 +39,6 @@ class UserType extends AbstractType
                 'required' => true,
                 'attr' => ['max_length' => 255],
             ]);
-        $builder->add(
-            'roles',
-            ChoiceType::class,
-            [
-                'choices' => [
-                    'User' => 'ROLE_USER',
-                    'Admin' => 'ROLE_ADMIN',
-                ],
-                'multiple' => true,
-                'expanded' => true,
-                'label' => 'label.role',
-                'required' => true,
-            ]
-        );
-
-//        $builder->add(
-//            'role',
-//            TextType::class,
-//            [
-//                'choice_label' => function ($category): string {
-//                    return $category->getTitle();
-//                },
-//                'label' => 'label.role',
-//                'placeholder' => 'label.none',
-//                'required' => true,
-//            ]
-//        );
 
         $builder->add(
             'password',

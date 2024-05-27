@@ -31,9 +31,8 @@ class UserController extends AbstractController
      * @param UserServiceInterface $userService User service
      * @param TranslatorInterface  $translator  Translator
      */
-    public function __construct(private readonly UserServiceInterface $userService, private readonly TranslatorInterface $translator, UserPasswordHasherInterface $passwordHasher)
+    public function __construct(private readonly UserServiceInterface $userService, private readonly TranslatorInterface $translator)
     {
-        $this->passwordHasher = $passwordHasher;
     }
 
     /**
@@ -76,7 +75,6 @@ class UserController extends AbstractController
         );
     }
 
-    private UserPasswordHasherInterface $passwordHasher;
 
     /**
      * Create action.
@@ -97,12 +95,9 @@ class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->passwordHasher->hashPassword(
-                $user,
-                $form->get('password')->getData()
-            );
+            $plainPassword = $form->get('password')->getData();
 
-            $this->userService->save($user);
+            $this->userService->save($user, $plainPassword);
 
             $this->addFlash(
                 'success',

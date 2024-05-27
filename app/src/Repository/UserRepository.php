@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Enum\UserRole;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManager;
@@ -73,8 +74,10 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 //        $this->_em->persist($user);
 //        $this->_em->flush();
 //    }
-    public function save(User $user): void
+    public function save(User $user, string $hashedPassword): void
     {
+        $user -> setPassword($hashedPassword);
+        $user -> setRoles([UserRole::ROLE_USER->value]);
         assert($this->_em instanceof EntityManager);
         $this->_em->persist($user);
         $this->_em->flush();

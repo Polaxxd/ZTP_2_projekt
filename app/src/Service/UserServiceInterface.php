@@ -28,7 +28,7 @@ interface UserServiceInterface
      *
      * @param User $user User entity
      */
-    public function save(User $user): void;
+    public function save(User $user, string $plainPassword): void;
 
     /**
      * Deleting user's notes

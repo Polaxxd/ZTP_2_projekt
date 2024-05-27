@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\Pagination\PaginationInterface;
 use Knp\Component\Pager\PaginatorInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
  * Class UserService.
@@ -43,8 +44,10 @@ class UserService implements UserServiceInterface
         private readonly PaginatorInterface $paginator,
         private readonly TaskRepository $taskRepository,
         private readonly NoteRepository $noteRepository,
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher
     ) {
+        $this->passwordHasher = $passwordHasher;
     }
 
     /**
@@ -68,9 +71,10 @@ class UserService implements UserServiceInterface
      *
      * @param User $user User entity
      */
-    public function save(User $user): void
+    public function save(User $user, string $plainPassword): void
     {
-        $this->userRepository->save($user);
+        $password = $this->passwordHasher->hashPassword($user, $plainPassword);
+        $this->userRepository->save($user, $password);
     }
 
     /**
