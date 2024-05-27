@@ -139,8 +139,9 @@ class CategoryController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/edit', name: 'category_edit', requirements: ['id' => '[1-9]\d*'], methods: 'GET|PUT')]
-    public function edit(Request $request, Category $category): Response
+    public function edit(Request $request, $id): Response
     {
+        $category = $this->categoryService -> findOneById($id);
         $form = $this->createForm(
             CategoryType::class,
             $category,
