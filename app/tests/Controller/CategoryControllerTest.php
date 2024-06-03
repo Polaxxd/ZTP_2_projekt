@@ -64,6 +64,36 @@ class CategoryControllerTest extends WebTestCase
     }
 
     /**
+     * Test show single category for non-authorised user.
+     */
+    public function testShowCategoryNonAuthorizedUser(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $testCategoryId = 123;
+        $expectedCategory = new Category();
+        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
+        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
+        $expectedCategory->setTitle('Test category');
+        $expectedCategory->setCreatedAt(new \DateTimeImmutable());
+        $expectedCategory->setUpdatedAt(new \DateTimeImmutable());
+        $expectedCategory->setSlug('test-category');
+        $categoryService = $this->createMock(CategoryServiceInterface::class);
+        static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
+
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$expectedCategory->getId());
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+        $this->assertTrue($this->httpClient->getResponse()->isRedirect());
+        $this->assertEquals('/login', $this->httpClient->getResponse()->headers->get('Location'));
+    }
+
+
+
+    /**
      * Test index route for anonymous user.
      */
     public function testIndexRouteAnonymousUser(): void
@@ -130,6 +160,76 @@ class CategoryControllerTest extends WebTestCase
     /**
      * Test show single category.
      */
+    public function testShowCategoryForNonExistantCategory(): void
+    {
+        // given
+        $expectedStatusCode = 404;
+        $testCategoryId = 1230;
+//        $expectedCategory = new Category();
+//        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
+//        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
+//        $expectedCategory->setTitle('Test category');
+//        $expectedCategory->setCreatedAt(new \DateTimeImmutable());
+//        $expectedCategory->setUpdatedAt(new \DateTimeImmutable());
+//        $expectedCategory->setSlug('test-category');
+//        $categoryService = $this->createMock(CategoryServiceInterface::class);
+//        $categoryService->expects($this->once())
+//            ->method('findOneById')
+//            ->with($testCategoryId)
+//            ->willReturn($expectedCategory);
+//        static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$testCategoryId);
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+//        $this->assertSelectorTextContains('html h1', '#'.$testCategoryId);
+        // ... more assertions...
+    }
+
+    /**
+     * Test edit non-existant category.
+     */
+    public function testEditCategoryForNonExistantCategory(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $testCategoryId = 1234;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $route = self::TEST_ROUTE . '/' . $testCategoryId . '/edit';
+        $this->httpClient->request('GET', $route);
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test delete non-existant category.
+     */
+    public function testDeleteCategoryForNonExistantCategory(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $testCategoryId = 1234;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $route = self::TEST_ROUTE . '/' . $testCategoryId . '/delete';
+        $this->httpClient->request('GET', $route);
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test show single category.
+     */
     public function testShowCategoryWithMock(): void
     {
         // given
@@ -158,6 +258,8 @@ class CategoryControllerTest extends WebTestCase
         $this->assertSelectorTextContains('html h1', '#'.$expectedCategory->getId());
         // ... more assertions...
     }
+
+
 
     /**
      * Test create category.

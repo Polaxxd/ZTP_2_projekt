@@ -73,9 +73,15 @@ class CategoryService implements CategoryServiceInterface
         );
     }
 
-    public function findOneById(int $id): ?Category
+    /**
+     * @param int $id
+     * @return Category|null
+     */
+    public function findOneById(int $id): Category | Null
     {
-        return $this -> categoryRepository->findOneById($id);
+        $category = $this->categoryRepository->findOneById($id);
+
+        return $category;
     }
 
 

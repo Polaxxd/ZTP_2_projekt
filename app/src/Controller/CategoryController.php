@@ -52,13 +52,21 @@ class CategoryController extends AbstractController
     }
 
     /**
-     * Find category by id
+     * Find category by id.
+     *
      * @param int $id
-     * @return Category|null
+     * @return Category
      */
-    public function findOneById(int $id): ?Category
+    public function findOneById(int $id): Category | Null
     {
-        return $this -> categoryRepository->findOneById($id);
+        if($category = $this->categoryRepository->findOneById($id))
+        {
+            return $category;
+        }
+        else
+        {
+            return Null;
+        }
     }
 
     /**
@@ -78,8 +86,9 @@ class CategoryController extends AbstractController
     {
         $category = $this->categoryService->findOneById($id);
         if (!$category) {
-            $this->createNotFoundException();
+            throw $this->createNotFoundException();
         }
+
         return $this->render('category/show.html.twig', ['category' => $category]);
     }
 

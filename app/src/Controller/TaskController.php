@@ -25,6 +25,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[Route('/task')]
 class TaskController extends AbstractController
 {
+    private $taskRepository;
+
     /**
      * Constructor.
      *
@@ -54,6 +56,16 @@ class TaskController extends AbstractController
     }
 
     /**
+     * Find task by id
+     * @param int $id
+     * @return Task|null
+     */
+    public function findOneById(int $id): ?Task
+    {
+        return $this -> taskRepository->findOneById($id);
+    }
+
+    /**
      * Show action.
      *
      * @param Task $task Task entity
@@ -67,8 +79,9 @@ class TaskController extends AbstractController
         methods: 'GET'
     )]
     #[IsGranted('VIEW', subject: 'task')]
-    public function show(Task $task): Response
+    public function show($id): Response
     {
+        $task = $this->findOneById($id);
         return $this->render(
             'task/show.html.twig',
             ['task' => $task]

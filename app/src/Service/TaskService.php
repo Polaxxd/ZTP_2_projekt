@@ -5,6 +5,7 @@
 
 namespace App\Service;
 
+use App\Entity\Category;
 use App\Entity\Task;
 use App\Entity\User;
 use App\Repository\TaskRepository;
@@ -52,6 +53,15 @@ class TaskService implements TaskServiceInterface
             $page,
             self::PAGINATOR_ITEMS_PER_PAGE
         );
+    }
+
+    /**
+     * @param int $id
+     * @return Task|null
+     */
+    public function findOneById(int $id): ?Task
+    {
+        return $this -> taskRepository->findOneById($id);
     }
 
     /**

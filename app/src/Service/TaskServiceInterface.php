@@ -24,6 +24,12 @@ interface TaskServiceInterface
     public function getPaginatedList(int $page, User $author): PaginationInterface;
 
     /**
+     * Find one by id.
+     *
+     */
+    public function findOneById(int $id): ?Task;
+
+    /**
      * Save entity.
      *
      * @param Task $task Task entity
