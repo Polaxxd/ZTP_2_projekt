@@ -47,7 +47,16 @@ interface CategoryServiceInterface
      * Find one by id.
      *
      */
-    public function canBeDeleted(Category $category): bool;
+    public function canBeDeleted($id): bool;
 
     public function findOneById(int $id): ?Category;
+
+    /**
+     * Does category with this id exist?
+     *
+     * @param Category $category Category entity
+     *
+     * @return bool Result
+     */
+    public function categoryExists($id): bool;
 }

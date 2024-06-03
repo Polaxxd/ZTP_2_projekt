@@ -119,8 +119,9 @@ class CategoryService implements CategoryServiceInterface
      *
      * @return bool Result
      */
-    public function canBeDeleted(Category $category): bool
+    public function canBeDeleted($id): bool
     {
+        $category = $this->findOneById($id);
         try {
             $taskCount = $this->taskRepository->countByCategory($category);
             $noteCount = $this->noteRepository->countByCategory($category);

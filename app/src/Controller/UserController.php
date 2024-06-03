@@ -99,7 +99,7 @@ class UserController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $plainPassword = $form->get('password')->getData();
 
-            $this->userService->save($user, $plainPassword);
+            $this->userService->registerUser($user, $plainPassword);
 
             $this->addFlash(
                 'success',

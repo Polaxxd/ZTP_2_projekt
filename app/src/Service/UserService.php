@@ -71,10 +71,20 @@ class UserService implements UserServiceInterface
      *
      * @param User $user User entity
      */
-    public function save(User $user, string $plainPassword): void
+    public function save(User $user): void
+    {
+        $this->userRepository->save($user);
+    }
+
+    /**
+     * Registr new entity.
+     *
+     * @param User $user User entity
+     */
+    public function registerUser(User $user, string $plainPassword): void
     {
         $password = $this->passwordHasher->hashPassword($user, $plainPassword);
-        $this->userRepository->save($user, $password);
+        $this->userRepository->registerUser($user, $password);
     }
 
     /**

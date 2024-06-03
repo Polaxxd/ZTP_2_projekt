@@ -122,7 +122,7 @@ class CategoryControllerTest extends WebTestCase
             )
         );
         $userRepository = static::getContainer()->get(UserRepository::class);
-        $userRepository->save($user, 'p@55w0rd');
+        $userRepository->save($user);
 
         return $user;
     }
@@ -179,6 +179,10 @@ class CategoryControllerTest extends WebTestCase
             ->method('findOneById')
             ->with($testCategoryId)
             ->willReturn($expectedCategory);
+        $categoryService->expects($this->once())
+            ->method('categoryExists')
+            ->with($testCategoryId)
+            ->willReturn(true);
         static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
         $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
         $this->httpClient->loginUser($adminUser);
@@ -215,12 +219,21 @@ class CategoryControllerTest extends WebTestCase
             ->method('findOneById')
             ->with($testCategoryId)
             ->willReturn($expectedCategory);
+        $categoryService->expects($this->once())
+            ->method('categoryExists')
+            ->with($testCategoryId)
+            ->willReturn(true);
+        $categoryService->expects($this->once())
+            ->method('canBeDeleted')
+            ->with($testCategoryId)
+            ->willReturn(true);
         static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
         $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
         $this->httpClient->loginUser($adminUser);
         // when
         $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$expectedCategory->getId().'/delete');
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+//        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
         // then
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
         $this->assertSelectorTextContains('html h1', '#'.$expectedCategory->getId());

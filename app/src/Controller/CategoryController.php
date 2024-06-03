@@ -202,7 +202,7 @@ class CategoryController extends AbstractController
             return $this->redirectToRoute('category_index');
         }
             $category = $this->categoryService->findOneById($id);
-            if (!$this->categoryService->canBeDeleted($category)) {
+            if (!$this->categoryService->canBeDeleted($id)) {
                 $this->addFlash(
                     'warning',
                     $this->translator->trans('message.category_contains_tasks_or_notes')
