@@ -51,29 +51,15 @@ class CategoryController extends AbstractController
         return $this->render('category/index.html.twig', ['pagination' => $pagination]);
     }
 
+    /**
+     * Find category by id
+     * @param int $id
+     * @return Category|null
+     */
     public function findOneById(int $id): ?Category
     {
         return $this -> categoryRepository->findOneById($id);
     }
-
-//    /**
-//     * Show action.
-//     *
-//     * @param Category $category Category
-//     *
-//     * @return Response HTTP response
-//     */
-//    #[Route(
-//        '/{id}',
-//        name: 'category_show',
-//        requirements: ['id' => '[1-9]\d*'],
-//        methods: 'GET'
-//    )]
-//    #[IsGranted('VIEW', subject: 'category')]
-//    public function show(Category $category): Response
-//    {
-//        return $this->render('category/show.html.twig', ['category' => $category]);
-//    }
 
     /**
      * Show action.

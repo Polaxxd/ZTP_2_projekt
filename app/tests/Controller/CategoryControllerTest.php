@@ -160,6 +160,26 @@ class CategoryControllerTest extends WebTestCase
     }
 
     /**
+     * Test create category.
+     */
+    public function testCreateCategory(): void
+    {
+        // given
+        $expectedStatusCode = 200;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $route = self::TEST_ROUTE . '/create';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+//        echo $this->httpClient->getResponse()->getContent();
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
      * Test edit category.
      */
     public function testEditCategoryWithMock(): void
