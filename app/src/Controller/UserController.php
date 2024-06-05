@@ -16,12 +16,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class UserController.
  */
+
 #[Route('/user')]
 class UserController extends AbstractController
 {
@@ -36,6 +38,19 @@ class UserController extends AbstractController
     }
 
     /**
+     * Checks if viever can list users.
+     *
+     * @param User          $viever User entity
+     * @param UserInterface $user User
+     *
+     * @return bool Result
+     */
+    private function canList(UserInterface $user): bool
+    {
+        return in_array("ROLE_ADMIN", $user->getRoles());
+    }
+
+    /**
      * Index action.
      *
      * @param int $page Page number
@@ -43,15 +58,19 @@ class UserController extends AbstractController
      * @return Response HTTP response
      */
     #[Route(name: 'user_index', methods: 'GET')]
-    #[IsGranted('ROLE_ADMIN')]
+//    #[IsGranted('ROLE_ADMIN')]
     public function index(#[MapQueryParameter] int $page = 1): Response
     {
+        $user = $this->getUser();
+        if($this->canList($user)){
         $pagination = $this->userService->getPaginatedList(
             $page,
             $this->getUser()
         );
 
         return $this->render('user/index.html.twig', ['pagination' => $pagination]);
+        }
+        return $this->redirectToRoute('note_index');
     }
 
     /**
