@@ -136,5 +136,14 @@ class UserService implements UserServiceInterface
         $this->userRepository->delete($user);
     }
 
+    /**
+     * @param int $id
+     * @return User|null
+     */
+    public function findOneById(int $id): ?User
+    {
+        return $this -> userRepository->findOneById($id);
+    }
+
 
 }

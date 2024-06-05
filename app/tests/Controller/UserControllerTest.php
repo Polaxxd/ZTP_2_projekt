@@ -105,6 +105,26 @@ class UserControllerTest extends WebTestCase
     }
 
     /**
+     * Test index route for non-admin user.
+     *
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|ORMException|OptimisticLockException
+     */
+    public function testIndexRouteNonAdminUser(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $normalUser = $this->createUser([UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($normalUser);
+
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE);
+        $resultStatusCode = $this->httpClient->getResponse()->getStatusCode();
+
+        // then
+        $this->assertEquals($expectedStatusCode, $resultStatusCode);
+    }
+
+    /**
      * Test index route for admin user.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface|ORMException|OptimisticLockException
@@ -122,6 +142,89 @@ class UserControllerTest extends WebTestCase
 
         // then
         $this->assertEquals($expectedStatusCode, $resultStatusCode);
+    }
+
+    /**
+     * Test show single non-existent user.
+     */
+    public function testShowUserForNonExistentUser(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $testUserId = 1230;
+
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$testUserId);
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+//        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test show single user for non-admin.
+     */
+    public function testShowUserWithMockNonAdmin(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $testUserId = 122;
+        $expectedUser = new User();
+        $userIdProperty = new \ReflectionProperty(User::class, 'id');
+        $userIdProperty->setValue($expectedUser, $testUserId);
+        $expectedUser->setEmail('u@e.pl');
+        $expectedUser->setPassword('u123');
+        $expectedUser->setRoles([UserRole::ROLE_USER->value]);
+        $normalUser = $this->createUser([UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($normalUser);
+//        $userRepository = static::getContainer()->get(UserRepository::class);
+//        $userRepository->save($expectedUser);
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$expectedUser->getId());
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+//        echo $this->httpClient->getResponse()->getContent();
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+//        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
+//
+//        $this->assertSelectorTextContains('html h1', '#'.$expectedUser->getId());
+    }
+
+    /**
+     * Test show single user.
+     */
+    public function testShowUserWithMock(): void
+    {
+        // given
+        $expectedStatusCode = 200;
+        $testUserId = 122;
+        $expectedUser = new User();
+        $userIdProperty = new \ReflectionProperty(User::class, 'id');
+        $userIdProperty->setValue($expectedUser, $testUserId);
+        $expectedUser->setEmail('u@e.pl');
+        $expectedUser->setPassword('u123');
+        $expectedUser->setRoles([UserRole::ROLE_USER->value]);
+        $userService = $this->createMock(UserServiceInterface::class);
+        $userService->expects($this->once())
+            ->method('findOneById')
+            ->with($testUserId)
+            ->willReturn($expectedUser);
+        static::getContainer()->set(UserServiceInterface::class, $userService);
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+//        $userRepository = static::getContainer()->get(UserRepository::class);
+//        $userRepository->save($expectedUser);
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$expectedUser->getId());
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+//        echo $this->httpClient->getResponse()->getContent();
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+//        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
+//
+//        $this->assertSelectorTextContains('html h1', '#'.$expectedUser->getId());
     }
 
 }

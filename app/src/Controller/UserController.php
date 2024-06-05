@@ -61,8 +61,8 @@ class UserController extends AbstractController
 //    #[IsGranted('ROLE_ADMIN')]
     public function index(#[MapQueryParameter] int $page = 1): Response
     {
-        $user = $this->getUser();
-        if($this->canList($user)){
+        $loggedUser = $this->getUser();
+        if($this->canList($loggedUser)){
         $pagination = $this->userService->getPaginatedList(
             $page,
             $this->getUser()
@@ -86,13 +86,21 @@ class UserController extends AbstractController
         requirements: ['id' => '[1-9]\d*'],
         methods: 'GET'
     )]
-    #[IsGranted('ROLE_ADMIN')]
-    public function show(User $user): Response
+//    #[IsGranted('ROLE_ADMIN')]
+    public function show($id): Response
     {
+        $loggedUser = $this->getUser();
+        if($this->canList($loggedUser)){
+        $user = $this->userService->findOneById($id);
+        if($user){
         return $this->render(
             'user/show.html.twig',
             ['user' => $user]
         );
+        }
+            return $this->redirectToRoute('user_index');
+        }
+        return $this->redirectToRoute('note_index');
     }
 
 
@@ -104,9 +112,11 @@ class UserController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/create', name: 'user_create', methods: 'GET|POST')]
-    #[IsGranted('ROLE_ADMIN')]
+//    #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request): Response
     {
+        $loggedUser = $this->getUser();
+        if($this->canList($loggedUser)){
         $user = new User();
         $form = $this->createForm(
             UserType::class,
@@ -132,6 +142,8 @@ class UserController extends AbstractController
             'user/create.html.twig',
             ['form' => $form->createView()]
         );
+        }
+        return $this->redirectToRoute('note_index');
     }
 
     /**
@@ -143,9 +155,11 @@ class UserController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/edit', name: 'user_edit', requirements: ['id' => '[1-9]\d*'], methods: 'GET|PUT')]
-    #[IsGranted('ROLE_ADMIN')]
+//    #[IsGranted('ROLE_ADMIN')]
     public function edit(Request $request, User $user): Response
     {
+        $loggedUser = $this->getUser();
+        if($this->canList($loggedUser)){
         $form = $this->createForm(
             UserType::class,
             $user,
@@ -174,6 +188,8 @@ class UserController extends AbstractController
                 'user' => $user,
             ]
         );
+        }
+        return $this->redirectToRoute('note_index');
     }
 
     /**
@@ -185,9 +201,11 @@ class UserController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/delete', name: 'user_delete', requirements: ['id' => '[1-9]\d*'], methods: 'GET|DELETE')]
-    #[IsGranted('ROLE_ADMIN')]
+//    #[IsGranted('ROLE_ADMIN')]
     public function delete(Request $request, User $user): Response
     {
+        $loggedUser = $this->getUser();
+        if($this->canList($loggedUser)){
         $form = $this->createForm(
             FormType::class,
             $user,
@@ -216,5 +234,8 @@ class UserController extends AbstractController
                 'user' => $user,
             ]
         );
+        }
+
+        return $this->redirectToRoute('note_index');
     }
 }

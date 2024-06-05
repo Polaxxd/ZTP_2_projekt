@@ -143,9 +143,9 @@ class NoteControllerTest extends WebTestCase
     }
 
     /**
-     * Test show single note.
+     * Test show single non-existent note.
      */
-    public function testShowNoteForNonExistantNote(): void
+    public function testShowNoteForNonExistentNote(): void
     {
         // given
         $expectedStatusCode = 302;
