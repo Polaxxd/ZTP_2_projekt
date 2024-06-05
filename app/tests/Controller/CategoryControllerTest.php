@@ -321,6 +321,57 @@ class CategoryControllerTest extends WebTestCase
         // ... more assertions...
     }
 
+//    /**
+//     * Test editing a category with a PUT request.
+//     */
+//    public function testEditCategoryPostWithMock(): void
+//    {
+//        // given
+//        $expectedStatusCode = 200; // Redirect after successful form submission
+//        $testCategoryId = 123;
+//        $expectedCategory = new Category();
+//        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
+//        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
+//        $expectedCategory->setTitle('Test category');
+//        $expectedCategory->setCreatedAt(new \DateTimeImmutable());
+//        $expectedCategory->setUpdatedAt(new \DateTimeImmutable());
+//        $expectedCategory->setSlug('test-category');
+//
+//        $categoryService = $this->createMock(CategoryServiceInterface::class);
+//        $categoryService->expects($this->once())
+//            ->method('findOneById')
+//            ->with($testCategoryId)
+//            ->willReturn($expectedCategory);
+//        $categoryService->expects($this->once())
+//            ->method('categoryExists')
+//            ->with($testCategoryId)
+//            ->willReturn(true);
+//        $categoryService->expects($this->once())
+//            ->method('save')
+//            ->with($this->isInstanceOf(Category::class));
+//
+//        static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
+//        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+//        $this->httpClient->loginUser($adminUser);
+//
+//        // when
+//        $route = self::TEST_ROUTE . '/' . $expectedCategory->getId() . '/edit';
+//        $this->httpClient->request('POST', $route, [
+//            'title' => 'Updated category title',
+//            '_method' => 'PUT', // Symfony's method override to handle PUT requests
+//        ]);
+//
+//        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+//
+//        // then
+//        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+////        $this->assertResponseRedirects($this->urlGenerator->generate('category_index'));
+//
+////        // Verify that the category title has been updated
+////        $updatedCategory = $categoryService->findOneById($testCategoryId);
+////        $this->assertEquals('Updated category title', $updatedCategory->getTitle());
+//    }
+
     /**
      * Test delete category.
      */
