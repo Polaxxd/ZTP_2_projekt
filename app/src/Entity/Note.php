@@ -37,7 +37,8 @@ class Note
      * @var DateTimeImmutable|null
      */
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    #[Gedmo\Timestampable(on: 'create')]
+    private ?\DateTimeImmutable $createdAt;
 
     /**
      * Updated at.
@@ -45,7 +46,8 @@ class Note
      * @var DateTimeImmutable|null
      */
     #[ORM\Column]
-    private ?\DateTimeImmutable $updatedAt = null;
+    #[Gedmo\Timestampable(on: 'update')]
+    private ?\DateTimeImmutable $updatedAt;
 
     /**
      * Title.

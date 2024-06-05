@@ -1,18 +1,18 @@
 <?php
 /**
- * Task Controller test.
+ * Note Controller test.
  */
 
 namespace App\Tests\Controller;
 
 use App\Entity\Category;
-use App\Entity\Task;
+use App\Entity\Note;
 use App\Entity\Enum\UserRole;
 use App\Entity\User;
 use App\Repository\CategoryRepository;
-use App\Repository\TaskRepository;
+use App\Repository\NoteRepository;
 use App\Repository\UserRepository;
-use App\Service\TaskServiceInterface;
+use App\Service\NoteServiceInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Psr\Container\ContainerExceptionInterface;
@@ -21,16 +21,16 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * Class TaskControllerTest.
+ * Class NoteControllerTest.
  */
-class TaskControllerTest extends WebTestCase
+class NoteControllerTest extends WebTestCase
 {
     /**
      * Test route.
      *
      * @const string
      */
-    public const TEST_ROUTE = '/task';
+    public const TEST_ROUTE = '/note';
 
     /**
      * Test client.
@@ -51,7 +51,7 @@ class TaskControllerTest extends WebTestCase
     protected function createCategory(): Category
     {
         $category = new Category();
-        $category->setTitle('TTitle');
+        $category->setTitle('Title');
         $category->setUpdatedAt(new \DateTimeImmutable());
         $category->setCreatedAt(new \DateTimeImmutable());
         $categoryRepository = self::getContainer()->get(CategoryRepository::class);
@@ -143,18 +143,18 @@ class TaskControllerTest extends WebTestCase
     }
 
     /**
-     * Test show single task.
+     * Test show single note.
      */
-    public function testShowTaskForNonExistantTask(): void
+    public function testShowNoteForNonExistantNote(): void
     {
         // given
         $expectedStatusCode = 302;
-        $testTaskId = 1230;
+        $testNoteId = 1230;
 
         $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
         $this->httpClient->loginUser($adminUser);
         // when
-        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$testTaskId);
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$testNoteId);
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
 //        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
         // then
@@ -162,9 +162,9 @@ class TaskControllerTest extends WebTestCase
     }
 
     /**
-     * Test show single task.
+     * Test show single note.
      */
-    public function testShowTaskWithMock(): void
+    public function testShowNoteWithMock(): void
     {
         // given
         $expectedStatusCode = 200;
@@ -173,40 +173,41 @@ class TaskControllerTest extends WebTestCase
         $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
         $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
         $expectedCategory->setTitle('Test category');
-        $testTaskId = 122;
-        $expectedTask = new Task();
-        $taskIdProperty = new \ReflectionProperty(Task::class, 'id');
-        $taskIdProperty->setValue($expectedTask, $testTaskId);
-        $expectedTask->setTitle('Test task');
-        $expectedTask->setCreatedAt(new \DateTimeImmutable());
-        $expectedTask->setUpdatedAt(new \DateTimeImmutable());
-        $expectedTask->setCategory($this->createCategory());
-        $taskService = $this->createMock(TaskServiceInterface::class);
-        $taskService->expects($this->once())
+        $testNoteId = 122;
+        $expectedNote = new Note();
+        $noteIdProperty = new \ReflectionProperty(Note::class, 'id');
+        $noteIdProperty->setValue($expectedNote, $testNoteId);
+        $expectedNote->setTitle('Test note');
+        $expectedNote->setContent('Test note content');
+        $expectedNote->setCreatedAt(new \DateTimeImmutable());
+        $expectedNote->setUpdatedAt(new \DateTimeImmutable());
+        $expectedNote->setCategory($this->createCategory());
+        $noteService = $this->createMock(NoteServiceInterface::class);
+        $noteService->expects($this->once())
             ->method('findOneById')
-            ->with($testTaskId)
-            ->willReturn($expectedTask);
-        static::getContainer()->set(TaskServiceInterface::class, $taskService);
+            ->with($testNoteId)
+            ->willReturn($expectedNote);
+        static::getContainer()->set(NoteServiceInterface::class, $noteService);
         $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
-        $expectedTask->setAuthor($adminUser);
+        $expectedNote->setAuthor($adminUser);
         $this->httpClient->loginUser($adminUser);
-//        $taskRepository = static::getContainer()->get(TaskRepository::class);
-//        $taskRepository->save($expectedTask);
+//        $noteRepository = static::getContainer()->get(NoteRepository::class);
+//        $noteRepository->save($expectedNote);
         // when
-        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$expectedTask->getId());
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$expectedNote->getId());
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
 //        echo $this->httpClient->getResponse()->getContent();
         // then
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
 //        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
 //
-//        $this->assertSelectorTextContains('html h1', '#'.$expectedTask->getId());
+//        $this->assertSelectorTextContains('html h1', '#'.$expectedNote->getId());
     }
 //
     /**
-     * Test create task.
+     * Test create note.
      */
-    public function testCreateTask(): void
+    public function testCreateNote(): void
     {
         // given
         $expectedStatusCode = 200;
@@ -224,20 +225,21 @@ class TaskControllerTest extends WebTestCase
     }
 
 //    /**
-//     * Test create and save task.
+//     * Test create and save note.
 //     */
-//    public function testCreateSaveTask(): void
+//    public function testCreateSaveNote(): void
 //    {
 //        // given
 //        $expectedStatusCode = 302;
 //        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
 //        $this->httpClient->loginUser($adminUser);
-//        $createdTaskTitle = "newCreatedTask";
+//        $createdNoteTitle = "newCreatedNote";
 //        $testCategoryId = 123;
 //        $expectedCategory = new Category();
 //        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
 //        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
 //        $expectedCategory->setTitle('Test category');
+//         $expectedNote->setContent('Test note content');
 //        $categoryRepository = static::getContainer()->get(CategoryRepository::class);
 //        // when
 //        $route = self::TEST_ROUTE . '/create';
@@ -245,9 +247,9 @@ class TaskControllerTest extends WebTestCase
 //        $this->httpClient->request('GET', $route);
 //        $this->httpClient->submitForm(
 //            'Zapisz',
-//            ['task' =>
+//            ['note' =>
 //                [
-//                    'title' => $createdTaskTitle,
+//                    'title' => $createdNoteTitle,
 //                    'category' => ""
 //                ]
 //            ]
@@ -264,29 +266,30 @@ class TaskControllerTest extends WebTestCase
 
 
 //    /**
-//     * Test edit task.
+//     * Test edit note.
 //     */
-//    public function testEditTaskWithMock(): void
+//    public function testEditNoteWithMock(): void
 //    {
 //        // given
 //        $expectedStatusCode = 200;
-//        $testTaskId = 123;
-//        $expectedTask = new Task();
-//        $taskIdProperty = new \ReflectionProperty(Task::class, 'id');
-//        $taskIdProperty->setValue($expectedTask, $testTaskId);
-//        $expectedTask->setTitle('Test task');
-//        $expectedTask->setCreatedAt(new \DateTimeImmutable());
-//        $expectedTask->setUpdatedAt(new \DateTimeImmutable());
-//        $taskService = $this->createMock(TaskServiceInterface::class);
-//        $taskService->expects($this->once())
+//        $testNoteId = 123;
+//        $expectedNote = new Note();
+//        $noteIdProperty = new \ReflectionProperty(Note::class, 'id');
+//        $noteIdProperty->setValue($expectedNote, $testNoteId);
+//        $expectedNote->setTitle('Test note');
+//        $expectedNote->setContent('Test note content');
+//        $expectedNote->setCreatedAt(new \DateTimeImmutable());
+//        $expectedNote->setUpdatedAt(new \DateTimeImmutable());
+//        $noteService = $this->createMock(NoteServiceInterface::class);
+//        $noteService->expects($this->once())
 //            ->method('findOneById')
-//            ->with($testTaskId)
-//            ->willReturn($expectedTask);
-//        static::getContainer()->set(TaskServiceInterface::class, $taskService);
+//            ->with($testNoteId)
+//            ->willReturn($expectedNote);
+//        static::getContainer()->set(NoteServiceInterface::class, $noteService);
 //        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
 //        $this->httpClient->loginUser($adminUser);
 //        // when
-//        $route = self::TEST_ROUTE . '/' . $expectedTask->getId() . '/edit';
+//        $route = self::TEST_ROUTE . '/' . $expectedNote->getId() . '/edit';
 ////        echo $route;
 //        $this->httpClient->request('GET', $route);
 ////        echo $this->httpClient->getResponse()->getContent();
@@ -294,14 +297,14 @@ class TaskControllerTest extends WebTestCase
 //
 //        // then
 //        $this->assertEquals($expectedStatusCode, $actualStatusCode);
-//        $this->assertSelectorTextContains('html h1', '#'.$expectedTask->getId());
+//        $this->assertSelectorTextContains('html h1', '#'.$expectedNote->getId());
 //        // ... more assertions...
 //    }
 
     /**
-     * Test edit task.
+     * Test edit note.
      */
-    public function testEditTaskWithMock(): void
+    public function testEditNoteWithMock(): void
     {
         // given
         $expectedStatusCode = 200;
@@ -310,27 +313,26 @@ class TaskControllerTest extends WebTestCase
         $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
         $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
         $expectedCategory->setTitle('Test category');
-        $testTaskId = 122;
-        $expectedTask = new Task();
-        $taskIdProperty = new \ReflectionProperty(Task::class, 'id');
-        $taskIdProperty->setValue($expectedTask, $testTaskId);
-        $expectedTask->setTitle('Test task');
-        $expectedTask->setCreatedAt(new \DateTimeImmutable());
-        $expectedTask->setUpdatedAt(new \DateTimeImmutable());
-        $expectedTask->setCategory($this->createCategory());
-        $taskService = $this->createMock(TaskServiceInterface::class);
-        $taskService->expects($this->once())
+        $testNoteId = 122;
+        $expectedNote = new Note();
+        $noteIdProperty = new \ReflectionProperty(Note::class, 'id');
+        $noteIdProperty->setValue($expectedNote, $testNoteId);
+        $expectedNote->setTitle('Test note');
+        $expectedNote->setContent('Test note content');
+        $expectedNote->setCreatedAt(new \DateTimeImmutable());
+        $expectedNote->setUpdatedAt(new \DateTimeImmutable());
+        $expectedNote->setCategory($this->createCategory());
+        $noteService = $this->createMock(NoteServiceInterface::class);
+        $noteService->expects($this->once())
             ->method('findOneById')
-            ->with($testTaskId)
-            ->willReturn($expectedTask);
-        static::getContainer()->set(TaskServiceInterface::class, $taskService);
+            ->with($testNoteId)
+            ->willReturn($expectedNote);
+        static::getContainer()->set(NoteServiceInterface::class, $noteService);
         $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
-        $expectedTask->setAuthor($adminUser);
+        $expectedNote->setAuthor($adminUser);
         $this->httpClient->loginUser($adminUser);
-//        $taskRepository = static::getContainer()->get(TaskRepository::class);
-//        $taskRepository->save($expectedTask);
         // when
-        $route = $route = self::TEST_ROUTE . '/' . $expectedTask->getId() . '/edit';
+        $route = $route = self::TEST_ROUTE . '/' . $expectedNote->getId() . '/edit';
         $this->httpClient->request('GET', $route);
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
 //        echo $this->httpClient->getResponse()->getContent();
@@ -338,13 +340,13 @@ class TaskControllerTest extends WebTestCase
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
 //        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
 //
-//        $this->assertSelectorTextContains('html h1', '#'.$expectedTask->getId());
+//        $this->assertSelectorTextContains('html h1', '#'.$expectedNote->getId());
     }
 
     /**
-     * Test delete task.
+     * Test delete note.
      */
-    public function testDeleteTaskWithMock(): void
+    public function testDeleteNoteWithMock(): void
     {
         // given
         $expectedStatusCode = 200;
@@ -353,27 +355,28 @@ class TaskControllerTest extends WebTestCase
         $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
         $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
         $expectedCategory->setTitle('Test category');
-        $testTaskId = 122;
-        $expectedTask = new Task();
-        $taskIdProperty = new \ReflectionProperty(Task::class, 'id');
-        $taskIdProperty->setValue($expectedTask, $testTaskId);
-        $expectedTask->setTitle('Test task');
-        $expectedTask->setCreatedAt(new \DateTimeImmutable());
-        $expectedTask->setUpdatedAt(new \DateTimeImmutable());
-        $expectedTask->setCategory($this->createCategory());
-        $taskService = $this->createMock(TaskServiceInterface::class);
-        $taskService->expects($this->once())
+        $testNoteId = 122;
+        $expectedNote = new Note();
+        $noteIdProperty = new \ReflectionProperty(Note::class, 'id');
+        $noteIdProperty->setValue($expectedNote, $testNoteId);
+        $expectedNote->setTitle('Test note');
+        $expectedNote->setContent('Test note content');
+        $expectedNote->setCreatedAt(new \DateTimeImmutable());
+        $expectedNote->setUpdatedAt(new \DateTimeImmutable());
+        $expectedNote->setCategory($this->createCategory());
+        $noteService = $this->createMock(NoteServiceInterface::class);
+        $noteService->expects($this->once())
             ->method('findOneById')
-            ->with($testTaskId)
-            ->willReturn($expectedTask);
-        static::getContainer()->set(TaskServiceInterface::class, $taskService);
+            ->with($testNoteId)
+            ->willReturn($expectedNote);
+        static::getContainer()->set(NoteServiceInterface::class, $noteService);
         $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
-        $expectedTask->setAuthor($adminUser);
+        $expectedNote->setAuthor($adminUser);
         $this->httpClient->loginUser($adminUser);
-//        $taskRepository = static::getContainer()->get(TaskRepository::class);
-//        $taskRepository->save($expectedTask);
+//        $noteRepository = static::getContainer()->get(NoteRepository::class);
+//        $noteRepository->save($expectedNote);
         // when
-        $route = $route = self::TEST_ROUTE . '/' . $expectedTask->getId() . '/delete';
+        $route = $route = self::TEST_ROUTE . '/' . $expectedNote->getId() . '/delete';
         $this->httpClient->request('GET', $route);
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
 //        echo $this->httpClient->getResponse()->getContent();
@@ -381,6 +384,6 @@ class TaskControllerTest extends WebTestCase
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
 //        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
 //
-//        $this->assertSelectorTextContains('html h1', '#'.$expectedTask->getId());
+//        $this->assertSelectorTextContains('html h1', '#'.$expectedNote->getId());
     }
 }

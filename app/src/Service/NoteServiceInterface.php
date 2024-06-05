@@ -36,4 +36,10 @@ interface NoteServiceInterface
      * @param Note $note Note entity
      */
     public function delete(Note $note): void;
+
+    /**
+     * Find one by id.
+     *
+     */
+    public function findOneById(int $id): ?Note;
 }

@@ -8,6 +8,7 @@ namespace App\Tests\Controller;
 use App\Entity\Category;
 use App\Entity\Enum\UserRole;
 use App\Entity\User;
+use App\Repository\CategoryRepository;
 use App\Repository\UserRepository;
 use App\Service\CategoryServiceInterface;
 use Doctrine\ORM\OptimisticLockException;
@@ -165,19 +166,7 @@ class CategoryControllerTest extends WebTestCase
         // given
         $expectedStatusCode = 404;
         $testCategoryId = 1230;
-//        $expectedCategory = new Category();
-//        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
-//        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
-//        $expectedCategory->setTitle('Test category');
-//        $expectedCategory->setCreatedAt(new \DateTimeImmutable());
-//        $expectedCategory->setUpdatedAt(new \DateTimeImmutable());
-//        $expectedCategory->setSlug('test-category');
-//        $categoryService = $this->createMock(CategoryServiceInterface::class);
-//        $categoryService->expects($this->once())
-//            ->method('findOneById')
-//            ->with($testCategoryId)
-//            ->willReturn($expectedCategory);
-//        static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
+        $testCategoryId = 1230;
         $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
         $this->httpClient->loginUser($adminUser);
         // when
@@ -185,8 +174,6 @@ class CategoryControllerTest extends WebTestCase
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
         // then
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
-//        $this->assertSelectorTextContains('html h1', '#'.$testCategoryId);
-        // ... more assertions...
     }
 
     /**
@@ -282,6 +269,41 @@ class CategoryControllerTest extends WebTestCase
     }
 
     /**
+     * Test create and save category.
+     */
+    public function testCreateSaveCategory(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $createdCategoryTitle = "createdCat";
+        $categoryRepository = static::getContainer()->get(CategoryRepository::class);
+        // when
+        $route = self::TEST_ROUTE . '/create';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Zapisz',
+            ['category' =>
+                [
+                    'title' => $createdCategoryTitle
+                ]
+            ]
+        );
+
+
+//        echo $this->httpClient->getResponse()->getContent();
+
+
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+
+    }
+
+
+    /**
      * Test edit category.
      */
     public function testEditCategoryWithMock(): void
@@ -289,6 +311,48 @@ class CategoryControllerTest extends WebTestCase
         // given
         $expectedStatusCode = 200;
         $testCategoryId = 123;
+        $expectedCategory = new Category();
+        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
+        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
+        $expectedCategory->setTitle('Test category');
+        $expectedCategory->setCreatedAt(new \DateTimeImmutable());
+        $expectedCategory->setUpdatedAt(new \DateTimeImmutable());
+        $expectedCategory->setSlug('test-category');
+        $cslug = $expectedCategory->getSlug();
+        $categoryService = $this->createMock(CategoryServiceInterface::class);
+        $categoryService->expects($this->once())
+            ->method('findOneById')
+            ->with($testCategoryId)
+            ->willReturn($expectedCategory);
+        $categoryService->expects($this->once())
+            ->method('categoryExists')
+            ->with($testCategoryId)
+            ->willReturn(true);
+        static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $route = self::TEST_ROUTE . '/' . $expectedCategory->getId() . '/edit';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+//        echo $this->httpClient->getResponse()->getContent();
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+
+
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+        $this->assertSelectorTextContains('html h1', '#'.$expectedCategory->getId());
+        // ... more assertions...
+    }
+
+    /**
+     * Test edit and save category.
+     */
+    public function testEditSaveCategoryWithMock(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $testCategoryId = 120;
         $expectedCategory = new Category();
         $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
         $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
@@ -312,14 +376,30 @@ class CategoryControllerTest extends WebTestCase
         $route = self::TEST_ROUTE . '/' . $expectedCategory->getId() . '/edit';
 //        echo $route;
         $this->httpClient->request('GET', $route);
-//        echo $this->httpClient->getResponse()->getContent();
+// Check if the GET request works and the form is present
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('form[name="category"]');
+
+        // Submit the form with the updated data
+        $editedCategoryTitle = 'newEditedCategory';
+        $this->httpClient->submitForm(
+            'Edytuj',  // This should be the value attribute of the submit button in your form
+            [
+                'category[title]' => $editedCategoryTitle
+            ],
+            'PUT' // Ensure the form submission method is correct
+        );
+
+        // Check the response after form submission
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
 
         // then
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
-        $this->assertSelectorTextContains('html h1', '#'.$expectedCategory->getId());
-        // ... more assertions...
+//        echo $this->httpClient->getResponse()->getContent();
+//        $this->assertResponseRedirects('/category/index'); // Ensure it redirects to the correct route
     }
+
+
 
 //    /**
 //     * Test editing a category with a PUT request.

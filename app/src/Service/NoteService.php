@@ -99,6 +99,17 @@ class NoteService implements NoteServiceInterface
         $this->noteRepository->delete($note);
     }
 
+    /**
+     * Find one by id
+     * @param int $id
+     * @return Note|null
+     */
+    public function findOneById(int $id): ?Note
+    {
+        return $this -> noteRepository->findOneById($id);
+    }
+
+
 //    /**
 //     * Prepare filters for the notes list.
 //     *

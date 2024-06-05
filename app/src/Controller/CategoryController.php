@@ -51,23 +51,23 @@ class CategoryController extends AbstractController
         return $this->render('category/index.html.twig', ['pagination' => $pagination]);
     }
 
-    /**
-     * Find category by id.
-     *
-     * @param int $id
-     * @return Category
-     */
-    public function findOneById(int $id): Category | Null
-    {
-        if($category = $this->categoryRepository->findOneById($id))
-        {
-            return $category;
-        }
-        else
-        {
-            return Null;
-        }
-    }
+//    /**
+//     * Find category by id.
+//     *
+//     * @param int $id
+//     * @return Category
+//     */
+//    public function findOneById(int $id): Category | Null
+//    {
+//        if($category = $this->categoryRepository->findOneById($id))
+//        {
+//            return $category;
+//        }
+//        else
+//        {
+//            return Null;
+//        }
+//    }
 
     /**
      * Show action.
@@ -176,6 +176,8 @@ class CategoryController extends AbstractController
             ]
         );
     }
+
+
 
     /**
      * Delete action.

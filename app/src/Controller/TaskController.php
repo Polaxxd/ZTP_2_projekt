@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -38,6 +39,45 @@ class TaskController extends AbstractController
     }
 
     /**
+     * Checks if user can view task.
+     *
+     * @param Task          $task Task entity
+     * @param UserInterface $user User
+     *
+     * @return bool Result
+     */
+    private function canView(Task $task, UserInterface $user): bool
+    {
+        return $task->getAuthor() === $user;
+    }
+
+    /**
+     * Checks if user can edit task.
+     *
+     * @param Task          $task Task entity
+     * @param UserInterface $user User
+     *
+     * @return bool Result
+     */
+    private function canEdit(Task $task, UserInterface $user): bool
+    {
+        return $task->getAuthor() === $user;
+    }
+
+    /**
+     * Checks if user can delete task.
+     *
+     * @param Task          $task Task entity
+     * @param UserInterface $user User
+     *
+     * @return bool Result
+     */
+    private function canDelete(Task $task, UserInterface $user): bool
+    {
+        return $task->getAuthor() === $user;
+    }
+
+    /**
      * Index action.
      *
      * @param int $page Page number
@@ -55,15 +95,15 @@ class TaskController extends AbstractController
         return $this->render('task/index.html.twig', ['pagination' => $pagination]);
     }
 
-    /**
-     * Find task by id
-     * @param int $id
-     * @return Task|null
-     */
-    public function findOneById(int $id): ?Task
-    {
-        return $this -> taskRepository->findOneById($id);
-    }
+//    /**
+//     * Find task by id
+//     * @param int $id
+//     * @return Task|null
+//     */
+//    public function findOneById(int $id): ?Task
+//    {
+//        return $this -> taskRepository->findOneById($id);
+//    }
 
     /**
      * Show action.
@@ -78,14 +118,25 @@ class TaskController extends AbstractController
         requirements: ['id' => '[1-9]\d*'],
         methods: 'GET'
     )]
-    #[IsGranted('VIEW', subject: 'task')]
+//    #[IsGranted('VIEW', subject: 'task')]
     public function show($id): Response
     {
-        $task = $this->findOneById($id);
+        $task = $this->taskService->findOneById($id);
+        if ($task) {
+        $user = $this->getUser();
+        if($this->canView($task, $user)){
         return $this->render(
             'task/show.html.twig',
             ['task' => $task]
         );
+        }}
+        $this->addFlash(
+            'warning',
+            $this->translator->trans('message.task_not_found')
+        );
+
+        return $this->redirectToRoute('task_index');
+
     }
 
     /**
@@ -135,9 +186,13 @@ class TaskController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/edit', name: 'task_edit', requirements: ['id' => '[1-9]\d*'], methods: 'GET|PUT')]
-    #[IsGranted('VIEW', subject: 'task')]
-    public function edit(Request $request, Task $task): Response
+//    #[IsGranted('VIEW', subject: 'task')]
+    public function edit(Request $request, $id): Response
     {
+        $task = $this->taskService->findOneById($id);
+        if ($task) {
+            $user = $this->getUser();
+            if($this->canEdit($task, $user)){
         $form = $this->createForm(
             TaskType::class,
             $task,
@@ -166,6 +221,8 @@ class TaskController extends AbstractController
                 'task' => $task,
             ]
         );
+        }}
+        return $this->redirectToRoute('task_index');
     }
 
     /**
@@ -177,9 +234,13 @@ class TaskController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/delete', name: 'task_delete', requirements: ['id' => '[1-9]\d*'], methods: 'GET|DELETE')]
-    #[IsGranted('VIEW', subject: 'task')]
-    public function delete(Request $request, Task $task): Response
+//    #[IsGranted('VIEW', subject: 'task')]
+    public function delete(Request $request, $id): Response
     {
+        $task = $this->taskService->findOneById($id);
+        if ($task) {
+            $user = $this->getUser();
+            if($this->canDelete($task, $user)){
         $form = $this->createForm(
             FormType::class,
             $task,
@@ -208,5 +269,7 @@ class TaskController extends AbstractController
                 'task' => $task,
             ]
         );
+        }}
+        return $this->redirectToRoute('task_index');
     }
 }

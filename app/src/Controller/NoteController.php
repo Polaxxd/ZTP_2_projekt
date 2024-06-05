@@ -14,6 +14,7 @@ use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -46,6 +47,45 @@ class NoteController extends AbstractController
     }
 
     /**
+     * Checks if user can edit note.
+     *
+     * @param Note          $note Note entity
+     * @param UserInterface $user User
+     *
+     * @return bool Result
+     */
+    private function canEdit(Note $note, UserInterface $user): bool
+    {
+        return $note->getAuthor() === $user;
+    }
+
+    /**
+     * Checks if user can view note.
+     *
+     * @param Note          $note Note entity
+     * @param UserInterface $user User
+     *
+     * @return bool Result
+     */
+    private function canView(Note $note, UserInterface $user): bool
+    {
+        return $note->getAuthor() === $user;
+    }
+
+    /**
+     * Checks if user can delete note.
+     *
+     * @param Note          $note Note entity
+     * @param UserInterface $user User
+     *
+     * @return bool Result
+     */
+    private function canDelete(Note $note, UserInterface $user): bool
+    {
+        return $note->getAuthor() === $user;
+    }
+
+    /**
      * Index action.
      *
      * @param int $page Page number
@@ -71,10 +111,18 @@ class NoteController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}', name: 'note_show', requirements: ['id' => '[1-9]\d*'], methods: 'GET')]
-    #[IsGranted('VIEW', subject: 'note')]
-    public function show(Note $note): Response
+//    #[IsGranted('VIEW', subject: 'note')]
+    public function show($id): Response
     {
-        return $this->render('note/show.html.twig', ['note' => $note]);
+        $note = $this->noteService->findOneById($id);
+        if ($note) {
+            $user = $this->getUser();
+            if($this->canView($note, $user)) {
+
+                return $this->render('note/show.html.twig', ['note' => $note]);
+            }
+        }
+        return $this->redirectToRoute('note_index');
     }
 
     /**
@@ -121,37 +169,44 @@ class NoteController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/edit', name: 'note_edit', requirements: ['id' => '[1-9]\d*'], methods: 'GET|PUT')]
-    #[IsGranted('VIEW', subject: 'note')]
-    public function edit(Request $request, Note $note): Response
+//    #[IsGranted('EDIT', subject: 'note')]
+    public function edit(Request $request, $id): Response
     {
-        $form = $this->createForm(
-            NoteType::class,
-            $note,
-            [
-                'method' => 'PUT',
-                'action' => $this->generateUrl('note_edit', ['id' => $note->getId()]),
-            ]
-        );
-        $form->handleRequest($request);
+        $note = $this->noteService->findOneById($id);
+        if ($note) {
+            $user = $this->getUser();
+            if($this->canEdit($note, $user)) {
+                $form = $this->createForm(
+                    NoteType::class,
+                    $note,
+                    [
+                        'method' => 'PUT',
+                        'action' => $this->generateUrl('note_edit', ['id' => $note->getId()]),
+                    ]
+                );
+                $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->noteService->save($note);
+                if ($form->isSubmitted() && $form->isValid()) {
+                    $this->noteService->save($note);
 
-            $this->addFlash(
-                'success',
-                $this->translator->trans('message.edited_successfully')
-            );
+                    $this->addFlash(
+                        'success',
+                        $this->translator->trans('message.edited_successfully')
+                    );
 
-            return $this->redirectToRoute('note_index');
-        }
+                    return $this->redirectToRoute('note_index');
+                }
 
-        return $this->render(
-            'note/edit.html.twig',
-            [
-                'form' => $form->createView(),
-                'note' => $note,
-            ]
-        );
+                return $this->render(
+                    'note/edit.html.twig',
+                    [
+                        'form' => $form->createView(),
+                        'note' => $note,
+                    ]
+                );
+            }
+            }
+        return $this->redirectToRoute('note_index');
     }
 
     /**
@@ -163,9 +218,13 @@ class NoteController extends AbstractController
      * @return Response HTTP response
      */
     #[Route('/{id}/delete', name: 'note_delete', requirements: ['id' => '[1-9]\d*'], methods: 'GET|DELETE')]
-    #[IsGranted('VIEW', subject: 'note')]
-    public function delete(Request $request, Note $note): Response
+//    #[IsGranted('DELETE', subject: 'note')]
+    public function delete(Request $request, $id): Response
     {
+        $note = $this->noteService->findOneById($id);
+        if ($note) {
+            $user = $this->getUser();
+            if($this->canDelete($note, $user)) {
         $form = $this->createForm(
             FormType::class,
             $note,
@@ -194,6 +253,8 @@ class NoteController extends AbstractController
                 'note' => $note,
             ]
         );
+        }}
+    return $this->redirectToRoute('note_index');
     }
 
 //    /**
