@@ -7,10 +7,12 @@ namespace App\Tests\Controller;
 
 use App\Entity\Category;
 use App\Entity\Enum\UserRole;
+use App\Entity\Note;
 use App\Entity\User;
 use App\Repository\CategoryRepository;
 use App\Repository\UserRepository;
 use App\Service\CategoryServiceInterface;
+use App\Service\NoteService;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Psr\Container\ContainerExceptionInterface;
@@ -157,6 +159,39 @@ class CategoryControllerTest extends WebTestCase
 
         return $user;
     }
+
+    /**
+     * Create category.
+     */
+    protected function createCategory(): Category
+    {
+        $category = new Category();
+        $category->setTitle('Title');
+        $category->setUpdatedAt(new \DateTimeImmutable());
+        $category->setCreatedAt(new \DateTimeImmutable());
+        $categoryRepository = self::getContainer()->get(CategoryRepository::class);
+        $categoryRepository->save($category);
+
+        return $category;
+    }
+    /**
+     * Create note.
+     */
+    private function createNote($category, $user): Note
+    {
+        $note = new Note();
+        $note->setTitle('Title');
+        $note->setContent('NoteContent');
+        $note->setUpdatedAt(new \DateTimeImmutable());
+        $note->setCreatedAt(new \DateTimeImmutable());
+        $note->setCategory($category);
+        $note->setAuthor($user);
+        $noteService = self::getContainer()->get(NoteService::class);
+        $noteService->save($note);
+
+        return $note;
+    }
+
 
     /**
      * Test show single category.
@@ -310,39 +345,29 @@ class CategoryControllerTest extends WebTestCase
     {
         // given
         $expectedStatusCode = 200;
-        $testCategoryId = 123;
-        $expectedCategory = new Category();
-        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
-        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
-        $expectedCategory->setTitle('Test category');
-        $expectedCategory->setCreatedAt(new \DateTimeImmutable());
-        $expectedCategory->setUpdatedAt(new \DateTimeImmutable());
-        $expectedCategory->setSlug('test-category');
-        $cslug = $expectedCategory->getSlug();
-        $categoryService = $this->createMock(CategoryServiceInterface::class);
-        $categoryService->expects($this->once())
-            ->method('findOneById')
-            ->with($testCategoryId)
-            ->willReturn($expectedCategory);
-        $categoryService->expects($this->once())
-            ->method('categoryExists')
-            ->with($testCategoryId)
-            ->willReturn(true);
-        static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
+        $expectedCategory = $this->createCategory();
+        $newCategoryTitle = 'newTitle';
         $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
         $this->httpClient->loginUser($adminUser);
         // when
         $route = self::TEST_ROUTE . '/' . $expectedCategory->getId() . '/edit';
-//        echo $route;
+       $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Edytuj',
+            ['category' =>
+                [
+                    'title' => $newCategoryTitle
+                ]
+            ]
+        );
         $this->httpClient->request('GET', $route);
 //        echo $this->httpClient->getResponse()->getContent();
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
 
 
         // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
-        $this->assertSelectorTextContains('html h1', '#'.$expectedCategory->getId());
-        // ... more assertions...
     }
 
     /**
@@ -491,5 +516,59 @@ class CategoryControllerTest extends WebTestCase
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
         $this->assertSelectorTextContains('html h1', '#'.$expectedCategory->getId());
         // ... more assertions...
+    }
+    /**
+     * Test delete category when can't be deleted.
+     */
+    public function testDeleteCategoryCantBeDeleted(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $testCategoryId = 123;
+        $expectedCategory = $this->createCategory();
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $createdNote = $this->createNote($expectedCategory, $adminUser);
+
+        // when
+        $this->httpClient->request('GET', self::TEST_ROUTE.'/'.$expectedCategory->getId().'/delete');
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+
+    /**
+     * Test delete category.
+     */
+    public function testDeleteCategoryForm(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $expectedCategory = $this->createCategory();
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+//        $categoryService = $this->createMock(CategoryServiceInterface::class);
+//        $categoryService->expects($this->once())
+//            ->method('findOneById')
+//            ->with($testCategoryId)
+//            ->willReturn($expectedCategory);
+//        $categoryService->expects($this->once())
+//            ->method('categoryExists')
+//            ->with($testCategoryId)
+//            ->willReturn(true);
+//        $categoryService->expects($this->once())
+//            ->method('canBeDeleted')
+//            ->with($testCategoryId)
+//            ->willReturn(true);
+//        static::getContainer()->set(CategoryServiceInterface::class, $categoryService);
+        $route = self::TEST_ROUTE . '/' . $expectedCategory->getId() . '/delete';
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Usuń'
+        );
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
     }
 }

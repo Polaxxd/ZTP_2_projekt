@@ -6,10 +6,17 @@
 namespace App\Tests\Controller;
 
 use App\Entity\Category;
+use App\Entity\Note;
+use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Enum\UserRole;
 use App\Repository\CategoryRepository;
+use App\Repository\NoteRepository;
+use App\Repository\TaskRepository;
 use App\Repository\UserRepository;
+use App\Service\NoteService;
+use App\Service\TaskService;
+use App\Service\UserService;
 use App\Service\UserServiceInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
@@ -75,6 +82,88 @@ class UserControllerTest extends WebTestCase
         return $user;
     }
 
+    /**
+     * Create second user.
+     *
+     * @param array $roles User roles
+     *
+     * @return User User entity
+     *
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|ORMException|OptimisticLockException
+     */
+    private function createUser2(array $roles): User
+    {
+        $passwordHasher = static::getContainer()->get('security.password_hasher');
+        $user = new User();
+        $user->setEmail('user2@example.com');
+        $user->setRoles($roles);
+        $user->setPassword(
+            $passwordHasher->hashPassword(
+                $user,
+                'p@55w0rd'
+            )
+        );
+        $userService = static::getContainer()->get(UserService::class);
+        $userService->save($user);
+
+        return $user;
+    }
+
+
+    /**
+     * Create category.
+     */
+    protected function createCategory(): Category
+    {
+        $category = new Category();
+        $category->setTitle('Title');
+        $category->setUpdatedAt(new \DateTimeImmutable());
+        $category->setCreatedAt(new \DateTimeImmutable());
+        $categoryRepository = self::getContainer()->get(CategoryRepository::class);
+        $categoryRepository->save($category);
+
+        return $category;
+    }
+
+    /**
+     * Create note.
+     */
+    private function createNote($category, $user): Note
+    {
+        $note = new Note();
+        $note->setTitle('Title');
+        $note->setContent('NoteContent');
+        $note->setUpdatedAt(new \DateTimeImmutable());
+        $note->setCreatedAt(new \DateTimeImmutable());
+        $note->setCategory($category);
+        $note->setAuthor($user);
+        $noteService = self::getContainer()->get(NoteService::class);
+        $noteService->save($note);
+
+        return $note;
+    }
+
+    /**
+     * Create task.
+     */
+    private function createTask($category, $user): Task
+    {
+        $task = new Task();
+        $task->setTitle('Title');
+        $task->setUpdatedAt(new \DateTimeImmutable());
+        $task->setCreatedAt(new \DateTimeImmutable());
+        $task->setCategory($category);
+        $task->setAuthor($user);
+        $taskService = self::getContainer()->get(TaskService::class);
+        $taskService->save($task);
+
+        return $task;
+    }
+
+
+    /**
+     * Test index route for non-authorized User
+     */
     public function testIndexRouteNonAuthorizedUser(): void
     {
         // given
@@ -225,6 +314,124 @@ class UserControllerTest extends WebTestCase
 //        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
 //
 //        $this->assertSelectorTextContains('html h1', '#'.$expectedUser->getId());
+        $adminUser->eraseCredentials();
     }
+
+    /**
+     * Test create user.
+     */
+    public function testCreateUser(): void
+    {
+        // given
+        $expectedStatusCode = 200;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $route = self::TEST_ROUTE . '/create';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+//        echo $this->httpClient->getResponse()->getContent();
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test add user.
+     */
+    public function testAddUser(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $createdUserEmail = "newuser@example.com";
+        $createdUserPassword = "user1234";
+        $userRepository = static::getContainer()->get(UserRepository::class);
+        // when
+        $route = self::TEST_ROUTE . '/create';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Zapisz',
+            ['user' =>
+                [
+                    'email' => $createdUserEmail,
+                    'password' => $createdUserPassword
+                ]
+            ]
+        );
+
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test delete user route.
+     */
+    public function testDeleteUser(): void
+    {
+        // given
+        $expectedStatusCode = 200;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $expectedUser = $this->createUser2([UserRole::ROLE_USER->value]);
+        $route = self::TEST_ROUTE . '/' . $expectedUser->getId() . '/delete';
+
+        // then
+        $this->httpClient->request('GET', $route);
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test delete user form.
+     */
+    public function testDeleteUserForm(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $expectedUser = $this->createUser2([UserRole::ROLE_USER->value]);
+        $route = self::TEST_ROUTE . '/' . $expectedUser->getId() . '/delete';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Usuń'
+
+        );
+
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test delete user with notes.
+     */
+    public function testDeleteUserWithNotes(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $expectedUser = $this->createUser2([UserRole::ROLE_USER->value]);
+        $expectedCategory = $this->createCategory();
+        $expectedNote = $this-> createNote($expectedCategory, $expectedUser);
+        $expectedTask = $this-> createTask($expectedCategory, $expectedUser);
+        $route = self::TEST_ROUTE . '/' . $expectedUser->getId() . '/delete';
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Usuń'
+        );
+
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
 
 }

@@ -57,4 +57,18 @@ interface UserServiceInterface
      *
      */
     public function findOneById(int $id): ?User;
+
+//    /**
+//     * Find one by email.
+//     *
+//     */
+//    public function findOneByEmail(int $email): ?User;
+
+//    /**
+//     * Upgrade user password.
+//     *
+//     * @param User $user User entity
+//     * @param string $plainPassword
+//     */
+//    public function ugradeUserPassword(User $user, string $plainPassword): void;
 }

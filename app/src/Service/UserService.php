@@ -145,5 +145,24 @@ class UserService implements UserServiceInterface
         return $this -> userRepository->findOneById($id);
     }
 
+//    /**
+//     * @param string $email
+//     * @return User|null
+//     */
+//    public function findOneByEmail(int $email): ?User
+//    {
+//        return $this -> userRepository->findOneByEmail($email);
+//    }
+
+//    /**
+//     * Upgrade user password.
+//     *
+//     * @param User $user User entity
+//     * @param string $plainPassword
+//     */
+//    public function ugradeUserPassword(User $user, string $plainPassword): void
+//    {
+//        $this->userRepository->upgradePassword( $user, $plainPassword);
+//    }
 
 }

@@ -12,6 +12,7 @@ use App\Entity\User;
 use App\Repository\CategoryRepository;
 use App\Repository\NoteRepository;
 use App\Repository\UserRepository;
+use App\Service\NoteService;
 use App\Service\NoteServiceInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
@@ -58,6 +59,24 @@ class NoteControllerTest extends WebTestCase
         $categoryRepository->save($category);
 
         return $category;
+    }
+
+    /**
+     * Create note.
+     */
+    private function createNote($category, $user): Note
+    {
+        $note = new Note();
+        $note->setTitle('Title');
+        $note->setContent('NoteContent');
+        $note->setUpdatedAt(new \DateTimeImmutable());
+        $note->setCreatedAt(new \DateTimeImmutable());
+        $note->setCategory($category);
+        $note->setAuthor($user);
+        $noteService = self::getContainer()->get(NoteService::class);
+        $noteService->save($note);
+
+        return $note;
     }
 
     /**
@@ -224,45 +243,38 @@ class NoteControllerTest extends WebTestCase
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
     }
 
-//    /**
-//     * Test create and save note.
-//     */
-//    public function testCreateSaveNote(): void
-//    {
-//        // given
-//        $expectedStatusCode = 302;
-//        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
-//        $this->httpClient->loginUser($adminUser);
-//        $createdNoteTitle = "newCreatedNote";
-//        $testCategoryId = 123;
-//        $expectedCategory = new Category();
-//        $categoryIdProperty = new \ReflectionProperty(Category::class, 'id');
-//        $categoryIdProperty->setValue($expectedCategory, $testCategoryId);
-//        $expectedCategory->setTitle('Test category');
-//         $expectedNote->setContent('Test note content');
-//        $categoryRepository = static::getContainer()->get(CategoryRepository::class);
-//        // when
-//        $route = self::TEST_ROUTE . '/create';
-////        echo $route;
-//        $this->httpClient->request('GET', $route);
-//        $this->httpClient->submitForm(
-//            'Zapisz',
-//            ['note' =>
-//                [
-//                    'title' => $createdNoteTitle,
-//                    'category' => ""
-//                ]
-//            ]
-//        );
-//
-//
-////        echo $this->httpClient->getResponse()->getContent();
-//
-//
-//        // then
-//        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
-//        $this->assertEquals($expectedStatusCode, $actualStatusCode);
-//    }
+    /**
+     * Test create and save note.
+     */
+    public function testCreateSaveNote(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $createdNoteTitle = "newCreatedNote";
+        $createdNoteContent = "newCreatedNoteContent";
+        $createdCategory = $this -> createCategory();
+        // when
+        $route = self::TEST_ROUTE . '/create';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Zapisz',
+            ['note' =>
+                [
+                    'title' => $createdNoteTitle,
+                    'content' => $createdNoteContent,
+                    'category' => $createdCategory->getId()
+                ]
+            ]
+        );
+//        echo $this->httpClient->getResponse()->getContent();
+
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
 
 
 //    /**
@@ -338,9 +350,60 @@ class NoteControllerTest extends WebTestCase
 //        echo $this->httpClient->getResponse()->getContent();
         // then
         $this->assertEquals($expectedStatusCode, $actualStatusCode);
-//        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
-//
-//        $this->assertSelectorTextContains('html h1', '#'.$expectedNote->getId());
+        $this->assertSelectorTextContains('html h1', '#'.$expectedNote->getId());
+    }
+
+    /**
+     * Test edit non-existent note.
+     */
+    public function testEditNonExistentNote(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $nonExistentId = 123456789;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $route = $route = self::TEST_ROUTE . '/' . $nonExistentId . '/edit';
+        $this->httpClient->request('GET', $route);
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+//        echo $this->httpClient->getResponse()->getContent();
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test edit and save note.
+     */
+    public function testEditNoteForm(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $createdNoteNewTitle = "newCreatedNote";
+        $createdNoteNewContent = "newCreatedNoteContent";
+        $createdCategory = $this -> createCategory();
+        $createdNote = $this->createNote($createdCategory, $adminUser);
+        // when
+        $route = $route = self::TEST_ROUTE . '/' . $createdNote->getId() . '/edit';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Edytuj',
+            ['note' =>
+                [
+                    'title' => $createdNoteNewTitle,
+                    'content' => $createdNoteNewContent,
+                    'category' => $createdCategory->getId()
+                ]
+            ]
+        );
+//        echo $this->httpClient->getResponse()->getContent();
+
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
     }
 
     /**
@@ -376,7 +439,7 @@ class NoteControllerTest extends WebTestCase
 //        $noteRepository = static::getContainer()->get(NoteRepository::class);
 //        $noteRepository->save($expectedNote);
         // when
-        $route = $route = self::TEST_ROUTE . '/' . $expectedNote->getId() . '/delete';
+        $route = self::TEST_ROUTE . '/' . $expectedNote->getId() . '/delete';
         $this->httpClient->request('GET', $route);
         $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
 //        echo $this->httpClient->getResponse()->getContent();
@@ -385,5 +448,47 @@ class NoteControllerTest extends WebTestCase
 //        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
 //
 //        $this->assertSelectorTextContains('html h1', '#'.$expectedNote->getId());
+    }
+
+    /**
+     * Test edit non-existent note.
+     */
+    public function testDeleteNonExistentNote(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $nonExistentId = 123456789;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        // when
+        $route = $route = self::TEST_ROUTE . '/' . $nonExistentId . '/delete';
+        $this->httpClient->request('GET', $route);
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+//        echo $this->httpClient->getResponse()->getContent();
+        // then
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
+    }
+
+    /**
+     * Test delete note.
+     */
+    public function testDeleteNoteForm(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $expectedCategory = $this ->createCategory();
+        $expectedTask = $this->createNote($expectedCategory, $adminUser);
+        $route = self::TEST_ROUTE . '/' . $expectedTask->getId() . '/delete';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Usuń'
+        );
+
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
     }
 }

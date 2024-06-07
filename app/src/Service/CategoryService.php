@@ -6,6 +6,7 @@
 namespace App\Service;
 
 use App\Entity\Category;
+use App\Entity\Note;
 use App\Repository\CategoryRepository;
 use App\Repository\NoteRepository;
 use App\Repository\TaskRepository;
@@ -56,6 +57,10 @@ class CategoryService implements CategoryServiceInterface
         private readonly PaginatorInterface $paginator
     ){
     }
+
+//    private static function getContainer()
+//    {
+//    }
 
     /**
      * Get paginated list.
@@ -123,15 +128,24 @@ class CategoryService implements CategoryServiceInterface
     public function canBeDeleted($id): bool
     {
         $category = $this->findOneById($id);
-        try {
-            $taskCount = $this->taskRepository->countByCategory($category);
-            $noteCount = $this->noteRepository->countByCategory($category);
+//        try {
+//            $taskCount = $this->taskRepository->countByCategory($category);
+//            $noteCount = $this->noteRepository->countByCategory($category);
+//
+//            // Check if the category is used in any tasks or notes
+//            return $taskCount === 0 && $noteCount === 0;
+//        } catch (NoResultException|NonUniqueResultException) {
+//            return false;
+//        }
+        $canBe = false;
+        $taskCount = $this->taskRepository->countByCategory($category);
+        $noteCount = $this->noteRepository->countByCategory($category);
 
-            // Check if the category is used in any tasks or notes
-            return $taskCount === 0 && $noteCount === 0;
-        } catch (NoResultException|NonUniqueResultException) {
-            return false;
+        // Check if the category is used in any tasks or notes
+        if($taskCount === 0 && $noteCount === 0){
+            return true;
         }
+        return false;
     }
 
     /**
@@ -143,12 +157,14 @@ class CategoryService implements CategoryServiceInterface
      */
     public function categoryExists($id): bool
     {
-        try {
-            $categoryCount = $this-> findOneById($id);
-            return (!is_null($categoryCount));
-        } catch (NoResultException|NonUniqueResultException) {
-            return false;
-        }
+//        try {
+//            $categoryCount = $this-> findOneById($id);
+//            return (!is_null($categoryCount));
+//        } catch (NoResultException|NonUniqueResultException) {
+//            return false;
+//        }
+        $categoryCount = $this-> findOneById($id);
+        return (!is_null($categoryCount));
     }
 
 }

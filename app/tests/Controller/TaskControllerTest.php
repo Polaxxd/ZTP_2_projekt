@@ -12,6 +12,7 @@ use App\Entity\User;
 use App\Repository\CategoryRepository;
 use App\Repository\TaskRepository;
 use App\Repository\UserRepository;
+use App\Service\TaskService;
 use App\Service\TaskServiceInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
@@ -58,6 +59,23 @@ class TaskControllerTest extends WebTestCase
         $categoryRepository->save($category);
 
         return $category;
+    }
+
+    /**
+     * Create task.
+     */
+    private function createTask($category, $user): Task
+    {
+        $task = new Task();
+        $task->setTitle('Title');
+        $task->setUpdatedAt(new \DateTimeImmutable());
+        $task->setCreatedAt(new \DateTimeImmutable());
+        $task->setCategory($category);
+        $task->setAuthor($user);
+        $taskService = self::getContainer()->get(TaskService::class);
+        $taskService->save($task);
+
+        return $task;
     }
 
     /**
@@ -382,5 +400,29 @@ class TaskControllerTest extends WebTestCase
 //        echo $actualStatusCode = $this->httpClient->getResponse()->getContent();
 //
 //        $this->assertSelectorTextContains('html h1', '#'.$expectedTask->getId());
+    }
+
+    /**
+     * Test delete task.
+     */
+    public function testDeleteTaskForm(): void
+    {
+        // given
+        $expectedStatusCode = 302;
+        $adminUser = $this->createUser([UserRole::ROLE_ADMIN->value, UserRole::ROLE_USER->value]);
+        $this->httpClient->loginUser($adminUser);
+        $expectedCategory = $this ->createCategory();
+        $expectedTask = $this->createTask($expectedCategory, $adminUser);
+        $route = self::TEST_ROUTE . '/' . $expectedTask->getId() . '/delete';
+//        echo $route;
+        $this->httpClient->request('GET', $route);
+        $this->httpClient->submitForm(
+            'Usuń'
+
+        );
+
+        // then
+        $actualStatusCode = $this->httpClient->getResponse()->getStatusCode();
+        $this->assertEquals($expectedStatusCode, $actualStatusCode);
     }
 }

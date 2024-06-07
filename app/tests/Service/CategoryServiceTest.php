@@ -7,11 +7,17 @@ namespace App\Tests\Service;
 
 use App\Entity\Category;
 use App\Entity\Enum\UserRole;
+use App\Entity\Note;
+use App\Entity\Task;
 use App\Entity\User;
+use App\Repository\CategoryRepository;
+use App\Repository\UserRepository;
 use App\Service\CategoryService;
 use App\Service\CategoryServiceInterface;
+use App\Service\NoteService;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Psr\Container\ContainerExceptionInterface;
@@ -44,6 +50,51 @@ class CategoryServiceTest extends KernelTestCase
         $container = static::getContainer();
         $this->entityManager = $container->get('doctrine.orm.entity_manager');
         $this->categoryService = $container->get(CategoryService::class);
+    }
+
+    /**
+     * Create user.
+     *
+     * @param array $roles User roles
+     *
+     * @return User User entity
+     *
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|ORMException|OptimisticLockException
+     */
+    private function createUser(array $roles): User
+    {
+        $passwordHasher = static::getContainer()->get('security.password_hasher');
+        $user = new User();
+        $user->setEmail('user@example.com');
+        $user->setRoles($roles);
+        $user->setPassword(
+            $passwordHasher->hashPassword(
+                $user,
+                'p@55w0rd'
+            )
+        );
+        $userRepository = static::getContainer()->get(UserRepository::class);
+        $userRepository->save($user);
+
+        return $user;
+    }
+
+    /**
+     * Create note.
+     */
+    private function createNote($category, $user): Note
+    {
+        $note = new Note();
+        $note->setTitle('Title');
+        $note->setContent('NoteContent');
+        $note->setUpdatedAt(new \DateTimeImmutable());
+        $note->setCreatedAt(new \DateTimeImmutable());
+        $note->setCategory($category);
+        $note->setAuthor($user);
+        $noteService = self::getContainer()->get(NoteService::class);
+        $noteService->save($note);
+
+        return $note;
     }
 
     /**
@@ -103,6 +154,74 @@ class CategoryServiceTest extends KernelTestCase
     }
 
     /**
+     * Test delete.
+     *
+     * @throws OptimisticLockException|ORMException
+     */
+    public function testCanBeDeleted(): void
+    {
+        // given
+        $categoryToDelete = new Category();
+        $categoryToDelete->setTitle('Test Category');
+        $this->entityManager->persist($categoryToDelete);
+        $this->entityManager->flush();
+        $deletedCategoryId = $categoryToDelete->getId();
+
+        // when
+        $verdict = $this->categoryService->canBeDeleted($deletedCategoryId);
+
+        // then
+        $resultTask = $this->entityManager->createQueryBuilder()
+            ->select('task')
+            ->from(Task::class, 'task')
+            ->where('task.category = :category')
+            ->setParameter(':category', $categoryToDelete)
+            ->getQuery()
+            ->getOneOrNullResult();
+        $resultNote = $this->entityManager->createQueryBuilder()
+            ->select('note')
+            ->from(Note::class, 'note')
+            ->where('note.category = :category')
+            ->setParameter(':category', $categoryToDelete)
+            ->getQuery()
+            ->getOneOrNullResult();
+        $resultDelete=$this->isNull($resultTask) && $this->isNull($resultNote);
+
+        $this->assertEquals($resultDelete, $verdict);
+    }
+
+    /**
+     * Test delete.
+     *
+     * @throws OptimisticLockException|ORMException
+     */
+    public function testCanBeDeletedWhenItCant(): void
+    {
+        // given
+        $categoryToDelete = new Category();
+        $categoryToDelete->setTitle('Test Category');
+        $this->entityManager->persist($categoryToDelete);
+        $this->entityManager->flush();
+        $deletedCategoryId = $categoryToDelete->getId();
+        $createdUser = $this->createUser([UserRole::ROLE_USER->value, UserRole::ROLE_ADMIN->value]);
+        $createdNote = $this->createNote($categoryToDelete, $createdUser);
+
+        // when
+        $verdict = $this->categoryService->canBeDeleted($deletedCategoryId);
+
+        // then
+        $resultNote = $this->entityManager->createQueryBuilder()
+            ->select('note')
+            ->from(Note::class, 'note')
+            ->where('note.category = :category')
+            ->setParameter(':category', $categoryToDelete)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        $this->assertEquals(is_null($resultNote), $verdict);
+    }
+
+    /**
      * Test find by id.
      *
      * @throws ORMException
@@ -149,5 +268,57 @@ class CategoryServiceTest extends KernelTestCase
         $this->assertEquals($expectedResultSize, $result->count());
     }
 
-    // other tests for paginated list
+    /**
+     * Test delete.
+     *
+     * @throws OptimisticLockException|ORMException
+     */
+    public function testCategoryExists(): void
+    {
+        // given
+        $categoryToCheck = new Category();
+        $categoryToCheck->setTitle('Test Category');
+        $this->entityManager->persist($categoryToCheck);
+        $this->entityManager->flush();
+        $checkCategoryId = $categoryToCheck->getId();
+
+        // when
+        $verdict = $this->categoryService->categoryExists($checkCategoryId);
+
+        // then
+        $resultCategory = $this->entityManager->createQueryBuilder()
+            ->select('category')
+            ->from(Category::class, 'category')
+            ->where('category.id = :id')
+            ->setParameter(':id', $checkCategoryId, Types::INTEGER)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($verdict){
+            $this->assertNotNull($resultCategory);
+        }
+        else {
+            $this->assertNull($resultCategory);
+        }
+    }
+
+//    /**
+//     * Test exist exception.
+//     *
+//     * @throws OptimisticLockException|ORMException
+//     */
+//    public function testCategoryExistsForNotCategory(): void
+//    {
+//        $categoryId = 1;
+//
+//        $categoryService1 = $this->createMock(CategoryService::class);
+//        $categoryService1->method('findOneById')->with($categoryId)->will($this->throwException(new NonUniqueResultException()));
+//
+//
+//        // Act
+//        $result = $this->categoryService->categoryExists($categoryId);
+//
+//        // Assert
+//        $this->assertFalse($result);
+//    }
 }
